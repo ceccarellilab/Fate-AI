@@ -1,12 +1,12 @@
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
 
-saveFragmBIN_fromBam <- function(PATH_INITIAL = "/home2/adefalco/Fate-AI/", 
-                                 sample = args[1], 
-                                 bam = args[2],
+saveFragmBIN_fromBam <- function(PATH_INITIAL = "./", 
+                                 sample, 
+                                 bam,
+                                 FASTA_FILE,
+                                 PATH_SAMTOOLS,
                                  BIN_SIZE = 3000000,
                                  NUM_THREADS = 40,
-                                 FASTA_FILE = ,
-                                 PATH_SAMTOOLS = ,
                                  MAPQ = 30,
                                  MAX_FRAG_LENGHT = 550,
                                  MIN_FRAG = 20,
@@ -167,12 +167,10 @@ saveFragmBIN_fromBam <- function(PATH_INITIAL = "/home2/adefalco/Fate-AI/",
 
 ##### Compute metrics in 3Mb region ####
 
-saveMetricsBIN <- function(sample = args[1],
-                           dirRead = ,
-                           dirSave = ,
+saveMetricsBIN <- function(PATH_INITIAL = "./", 
+                           sample,
                            BIN_SIZE = 3000000,
                            NUM_THREADS = 40,
-                           dirWorkflow = ,
                            GC_CORR = TRUE,
                            OUTPUT_DIR = "output/WGS/",
                            FRAGM_DIR = "FRAGM_BIN/",
@@ -267,7 +265,7 @@ for(i in 1:length(resFEATUREs)){
   
   resDff <- dff
   
-  endMotif_all <- read.csv(paste0(dirWorkflow,"/acc_files/end-motif.csv"), sep = ";", header = FALSE)
+  endMotif_all <- read.csv(paste0(PATH_INITIAL,"data/end-motif.csv"), sep = ";", header = FALSE)
   
   resDff <- resDff[resDff$Motif %in% endMotif_all,]
   
@@ -369,8 +367,8 @@ preProcessingFragmetomicsFeaturesAsList <- function(AllSampleRatioList, NA_VALUE
 }
 
 #### compute local feature ####
-#features_sel = c("ent","mean", "std","cv", "ratio_NucCor_Nuc" , "ratio_Chrom_Nuc","ratio_NucCorChrom_Nuc", "ratio", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
 
+#features_sel = c("ent","mean", "std","cv", "ratio_NucCor_Nuc" , "ratio_Chrom_Nuc","ratio_NucCorChrom_Nuc", "ratio", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
 getMtxDiff_eCDF_Features_SINGLE_SAMP <- function(resSample, df_ALT_GR,pathFragm, pathFeat, features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"), ECDF = TRUE, MIN_SIZE_ALT = 1500000){
   
   region_GR <- getRegionBinSample(pathFeat)
@@ -493,7 +491,8 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
   CNV_GR
 }
 
-#Extract WGS features based on CNV regions from Progenetix
+#### Extract WGS features based on CNV regions from Progenetix ####
+
 getFeatureBasedOnCNV <- function(AllSample, 
           CLASS_CNV, 
           NUM_THREADS = 30,
@@ -569,7 +568,7 @@ getFeatureBasedOnCNV <- function(AllSample,
         counts
       }))
       
-      Counts <- (Counts/sum(Counts))#*100
+      Counts <- (Counts/sum(Counts))
       Counts <- data.frame(Counts = Counts, Bin = paste(bin[-length(bin)], bin[-1]-1, sep = "-"))
       Counts$Class <- names(ALT_res)[ind-1]
       

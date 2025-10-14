@@ -16,6 +16,7 @@ snakemake --configfile $CONFIG_FILE \
 ```
 
 ## VARIANTS 
+```
 snakemake --configfile $CONFIG_FILE \
 	--executor slurm --workflow-profile profiles/default/ \
 	-s 1_pipelineAlign_noPlot.Snakefile \

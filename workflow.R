@@ -436,9 +436,7 @@ for(CLASS in c("Prostate")){
         
         #if(AGGREGATE_EXTERNAL_DATASET) CLASS <- paste0(CLASS, "_AGGREGATE_DATASETS")
         
-        
-        
-        
+
         save(resAUCs,MTX, AllSample,combinations, file = file_name)
         
         
