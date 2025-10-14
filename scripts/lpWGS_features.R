@@ -366,21 +366,38 @@ preProcessingFragmetomicsFeaturesAsList <- function(AllSampleRatioList, NA_VALUE
   AllSampleRatioList
 }
 
+#### GET REGION OF BINs ####
+
+getRegionBinSample <- function(pathMetrics){
+  
+  AllSampleDF <- get(load(pathMetrics))
+  
+  regionsOK <- rownames(AllSampleDF)
+  
+  regionsOK <- as.data.frame(matrix(unlist(strsplit(regionsOK, "-")), ncol=3, byrow=TRUE))
+  
+  colnames(regionsOK) <- c("Chr", "Start", "End")
+  regionsOK$Chr <- as.integer(regionsOK$Chr)
+  regionsOK$Start <- as.integer(regionsOK$Start)
+  regionsOK$End <- as.integer(regionsOK$End)
+  
+  region_GR <- GenomicRanges::makeGRangesFromDataFrame(regionsOK, seqnames.field = "Chr", start.field = "Start", end.field = "End", keep.extra.columns = FALSE)
+  region_GR
+}
+
 #### compute local feature ####
 
 #features_sel = c("ent","mean", "std","cv", "ratio_NucCor_Nuc" , "ratio_Chrom_Nuc","ratio_NucCorChrom_Nuc", "ratio", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
-getMtxDiff_eCDF_Features_SINGLE_SAMP <- function(resSample, df_ALT_GR,pathFragm, pathFeat, features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"), ECDF = TRUE, MIN_SIZE_ALT = 1500000){
+getMtxDiff_eCDF_Features_SINGLE_SAMP <- function(CNV_regions, pathMetrics, features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"), ECDF = TRUE, MIN_SIZE_ALT = 1500000){
   
-  region_GR <- getRegionBinSample(pathFeat)
+  region_GR <- getRegionBinSample(pathMetrics)
   
-  if(is.null(resSample)){
-    resSample <- list(get(load(pathFeat)))
-    names(resSample) <- pathFeat
-    resSample <- preProcessingFragmetomicsFeaturesAsList(resSample)[[1]]
-  }
+  resSample <- list(get(load(pathMetrics)))
+  names(resSample) <- pathMetrics
+  resSample <- preProcessingFragmetomicsFeaturesAsList(resSample)[[1]]
   
-  overlapGAIN <- findOverlaps(df_ALT_GR[df_ALT_GR$ALT=="GAIN",], region_GR, minoverlap = MIN_SIZE_ALT)
-  overlapLOSS <- findOverlaps(df_ALT_GR[df_ALT_GR$ALT=="LOSS",], region_GR, minoverlap = MIN_SIZE_ALT)
+  overlapGAIN <- findOverlaps(CNV_regions[CNV_regions$ALT=="GAIN",], region_GR, minoverlap = MIN_SIZE_ALT)
+  overlapLOSS <- findOverlaps(CNV_regions[CNV_regions$ALT=="LOSS",], region_GR, minoverlap = MIN_SIZE_ALT)
   
   plotFEAT <- lapply(features_sel, function(feat){
     
@@ -508,7 +525,7 @@ getFeatureBasedOnCNV <- function(AllSample,
           AMPs = c("GAIN",  "LOSS")){
   
   # GET CNV REGIONS FROM PROGENETIX
-  resCN <- getCNV_Regions(CLASS_CNV, FREQ_MANUAL = FREQ)
+  CNV_regions <- getCNV_Regions(CLASS_CNV, FREQ_MANUAL = FREQ)
   
   res_Density <- parallel::mclapply(1:nrow(AllSample), function(i){
     
@@ -517,24 +534,15 @@ getFeatureBasedOnCNV <- function(AllSample,
     
     load(sample$PathFragmentomics)
     
-    df_ALT_GR <- resCN
-    
     region_GR <- getRegionBinSample(sample$PathFeatures)
     
-    ##new
-    #names_region_GR <- paste(region_GR@seqnames, region_GR@ranges, sep = "-")
-    
-    print(table(df_ALT_GR$ALT))
+    print(table(CNV_regions$ALT))
     
     ALT_res <- lapply(AMPs, function(ALT){
       
-      overlapGAIN <- findOverlaps(df_ALT_GR[df_ALT_GR$ALT==ALT,], region_GR, minoverlap = MIN_SIZE_ALT)
+      overlap_with_CNV <- findOverlaps(CNV_regions[CNV_regions$ALT==ALT,], region_GR, minoverlap = MIN_SIZE_ALT)
       
-      ##new
-      #indexOverlapTO <- unique(overlapGAIN@to)
-      #resDff <- lapply(resFEATUREs[names_region_GR[indexOverlapTO]], function(x) x$region_weights)
-      
-      resDff <- lapply(resFEATUREs[unique(overlapGAIN@to)], function(x) x$region_weights) #old
+      resDff <- lapply(resFEATUREs[unique(overlap_with_CNV@to)], function(x) x$region_weights) 
     
       if(is.list(resDff)) resDff <- do.call(rbind, resDff)
       
@@ -607,7 +615,7 @@ getFeatureBasedOnCNV <- function(AllSample,
   #Local Features
   resECDF_ALL <- parallel::mclapply(1:nrow(AllSample), function(i){
     
-    MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(NULL, resCN, pathFragm = AllSample$PathFragmentomics[i], pathFeat = AllSample$PathFeatures[i], features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
+    MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = AllSample$PathFeatures[i], features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
     rownames(MTX) <- AllSample$FASTQ_Name[i]
     
     MTX
