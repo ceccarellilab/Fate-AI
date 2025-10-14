@@ -1,0 +1,1 @@
+/storage/qnap_vol1/SHARED/NGSTOOLS/BCBIO2021/bcbio/anaconda/bin/bedtools makewindows -g /home3/adefalco/Fate-AI/acc_files/GenomeSizeHg38.txt -w 3000000 -s 3000001 > genome3Mb.bed

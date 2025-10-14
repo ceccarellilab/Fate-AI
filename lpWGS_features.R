@@ -1,4 +1,447 @@
-#Extract CNV regions from Progenetix
+##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
+
+args = commandArgs( trailingOnly = TRUE )
+sample = args[1] 
+bam = args[2]
+dirSave = args[3]
+BIN_SIZE = as.numeric(args[4])
+NUM_THREADS = as.numeric(args[5])
+FASTA_FILE = args[6]
+PATH_SAMTOOLS = args[7]
+MAPQ = as.numeric(args[8])
+MAX_FRAG_LENGHT = as.numeric(args[9])
+MIN_FRAG = 20
+
+#SUFFIX_BAM <- "_recal.bam"
+SUFFIX_BAM <- gsub(".bam", "", args[10])
+PATH_OUTPUT_GC <- "GC_correction_output"
+SUFFIX_SAVE_FILE <- "_res_frag_motif.RData"
+
+path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
+
+dir.create(dirSave)
+
+PATH_INITIAL <- "/home3/adefalco/Fate-AI/"
+
+BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE), ".bed")
+
+library(parallel)
+library(dplyr)
+
+GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample,SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
+
+tmp_dir <- "/temp"
+awk_file_filter = paste0(PATH_INITIAL, "filter_wgs.awk")
+
+df_BED <- as.data.frame(read.csv(BEDFILE, sep = "\t"))
+regions <- apply(df_BED, 1, function(x) paste(gsub("chr","",x[1]), as.integer(x[2]), as.integer(x[3]) , sep = "-"))
+
+resFEATUREs <- mclapply(regions, function(region){
+  
+  print(region)
+  
+  region_data <-  strsplit(region, "-")[[1]]
+  region_data[1] <- paste0("chr", region_data[1])
+  position <- paste0(region_data[1],":",region_data[2],"-", region_data[3])
+  
+  watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", position, " | awk -v MIN_MAPQ=", 
+                   MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, 
+                   " -v CHR=", region_data[1], " -v R_START=", as.numeric(region_data[2]), 
+                   " -v R_END=", as.numeric(region_data[3]), " -v R_ID=", 
+                   region_data[6], " -f ", awk_file_filter)
+  
+  crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", 
+                  position, " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", 
+                  MAX_FRAG_LENGHT, " -v CHR=", region_data[1], 
+                  " -v R_START=", as.numeric(region_data[2]), " -v R_END=", 
+                  as.numeric(region_data[3]), " -v R_ID=", region_data[6], 
+                  " -f ", awk_file_filter)
+  
+  #### WATSON
+  
+  watsonFRAG <- tryCatch( 
+    {
+      read.csv(text = system(watson, intern = TRUE), 
+               header = FALSE, sep = "\t")
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+  
+  crickFRAG <- tryCatch( 
+    {
+      read.csv(text = system(crick, intern = TRUE), 
+               header = FALSE, sep = "\t")
+    },
+    error = function(e) {
+      NULL
+    }
+  )
+  
+  
+  if (!is.null(watsonFRAG)){
+    watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG,]
+    watsonFRAG$V1 <- "watsonFRAG"
+  }
+  if (!is.null(crickFRAG)){
+    crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG,]
+    crickFRAG$V1 <- "crickFRAG"
+  }
+  
+  if(is.null(crickFRAG) & is.null(watsonFRAG)){
+    actualStrand <- NULL
+  }else if(!is.null(crickFRAG) & !is.null(watsonFRAG)){
+    actualStrand <- rbind(watsonFRAG,crickFRAG)
+  }else if(!is.null(crickFRAG)){
+    actualStrand <- crickFRAG
+  }else if(!is.null(watsonFRAG)){
+    actualStrand <- watsonFRAG
+  }
+  
+  
+  if(!is.null(actualStrand)){
+    
+    regions <- paste0(actualStrand$V6,":",actualStrand$V7,"-", actualStrand$V8-1)
+    regions <- as.list(regions)
+    d <- 1:length(regions)
+    chunks <- split(d, ceiling(seq_along(d)/5000))
+    
+    resChunks <- lapply(chunks, function(chunk){
+      
+      func2 <-  paste(PATH_SAMTOOLS, "faidx ",FASTA_FILE, do.call(paste, regions[chunk]))
+      MOTIFS <- system(func2, intern = TRUE)
+      MOTIFS[grep("chr", MOTIFS)] <- "-"
+      MOTIFS <- (MOTIFS[!grepl("chr", MOTIFS)])
+      MOTIFS <- do.call(paste0, as.list(MOTIFS))
+      MOTIFS <- substr(MOTIFS, 2, nchar(MOTIFS))
+      MOTIFS <- strsplit(MOTIFS, split = "-")
+      MOTIFS
+    })
+    
+    resChunks <- unlist(resChunks)
+    region_weights <-  lapply(resChunks, function(seq){
+      fragm_len <- nchar(seq)
+      GC_count <- (lengths(regmatches(seq, gregexpr("G", seq))))+(lengths(regmatches(seq, gregexpr("C", seq))))
+      round(GC_bias[(fragm_len-MIN_FRAG)+1,GC_count+1],5)
+    })
+    
+    GC_weight <- unlist(region_weights)
+    actualStrand <- cbind(actualStrand, GC_weight)
+    
+    region_motifs <-  lapply(1:length(resChunks), function(num_seq){
+      seq <- resChunks[[num_seq]]
+      nameStrand <- actualStrand[num_seq,]$V1
+      if(nameStrand=="watsonFRAG"){
+        substr(seq, 1, 4)
+      }else if(nameStrand=="crickFRAG"){
+        substr(seq, nchar(seq)-3, nchar(seq))
+      }
+      
+    })
+    
+    end_motif <- unlist(region_motifs)
+    actualStrand <- cbind(actualStrand, end_motif)
+    
+    region_motifs <- as.data.frame(actualStrand %>% dplyr::group_by(end_motif) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
+    colnames(region_motifs) <- c("Motif", "sum_GC_weight", "Counts")
+    
+    region_weights <- as.data.frame(actualStrand %>% dplyr::group_by(V9) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
+    colnames(region_weights) <- c("Frag_len", "sum_GC_weight", "num_frag")
+    
+    list_res <- list(region_weights, region_motifs)
+    names(list_res) <- c("region_weights","region_motifs")
+    list_res
+  }else{
+    NULL
+  }
+  
+}, mc.cores = NUM_THREADS)
+
+names(resFEATUREs) <- regions
+
+save(resFEATUREs, file = path_output)
+
+##### Compute metrics in 3Mb region ####
+
+args = commandArgs( trailingOnly = TRUE )
+sample_name = args[1] 
+dirRead = args[2]
+dirSave = args[3]
+BIN_SIZE = as.numeric(args[4])
+NUM_THREADS = as.numeric(args[5])
+dirWorkflow = args[6]
+
+GC_CORR = TRUE
+
+dir.create(dirSave)
+setwd(dirSave)
+
+MIN_NUCLEOSOME_CORE <- 140
+MIN_CHROMATOSOME <- 160
+MIN_NUCLEOSOME <- 171
+MAX_NUCLEOSOME <- 240
+
+coverage_nucleosome_core <- function(frag_lengths){
+  sum(frag_lengths>=MIN_NUCLEOSOME_CORE  & frag_lengths<= MIN_CHROMATOSOME-1)
+}  
+
+coverage_chromatosome <- function(frag_lengths){
+  sum(frag_lengths>=MIN_CHROMATOSOME  & frag_lengths<= MIN_NUCLEOSOME-1)
+}
+
+coverage_nucleosome <- function(frag_lengths){
+  sum(frag_lengths>=MIN_NUCLEOSOME  & frag_lengths<= MAX_NUCLEOSOME)
+}    
+
+path_fragm_data <- paste0(dirRead, sample_name, "_", as.integer(BIN_SIZE), "_res_frag_motif.RData")
+path_output <- paste0(dirSave,sample_name, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
+
+print(sample_name)
+
+load(path_fragm_data)
+
+resFEATUREs <- resFEATUREs[unlist(lapply(resFEATUREs, function(x) !is.null(x$region_weights)))]
+
+df <- data.frame(row.names = names(resFEATUREs))
+
+df$mean <- NA
+df$coverage <- NA
+df$coverageNucCore <- NA 
+df$coverageChrom <- NA
+df$coverageNuc <- NA
+
+for(i in 1:length(resFEATUREs)){
+  
+  dff_all <- resFEATUREs[[i]]
+  
+  dff <- dff_all$region_weights
+  if(nrow(dff)>0){
+    
+    if(GC_CORR){
+      fragment_lengths <-  rep(dff$Frag_len,dff$sum_GC_weight)
+    }else{
+      fragment_lengths <-  rep(dff$Frag_len,dff$num_frag)
+    }
+    
+    if(length(fragment_lengths)>0){
+      
+      df$mean[i] = mean(fragment_lengths)
+      df$coverage[i] = sum(fragment_lengths)
+      df$coverageNucCore[i] = coverage_nucleosome_core(fragment_lengths)
+      df$coverageChrom[i] = coverage_chromatosome(fragment_lengths)
+      df$coverageNuc[i] = coverage_nucleosome(fragment_lengths)
+      
+    }
+  }
+  
+}
+
+save(df, file = paste0(dirSave,sample_name, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+
+df <- data.frame(row.names = names(resFEATUREs))
+
+df$CCCA <- NA
+df$CCAG <- NA
+df$CCTG <- NA
+df$TAAA <- NA
+df$AAAA <- NA
+df$TTTT <- NA
+
+for(i in 1:length(resFEATUREs)){
+  
+  dff_all <- resFEATUREs[[i]]
+  
+  dff <- dff_all$region_motifs
+  
+  resDff <- dff
+  
+  endMotif_all <- read.csv(paste0(dirWorkflow,"/acc_files/end-motif.csv"), sep = ";", header = FALSE)
+  
+  resDff <- resDff[resDff$Motif %in% endMotif_all,]
+  
+  if(sum(!endMotif_all %in% resDff$Motif)>0){
+    notMot <- endMotif_all[!endMotif_all %in% resDff$Motif]
+    resDffnotMot <- data.frame(Motif = as.integer(notMot), sum_GC_weight = 0 , Counts = 0)  
+    resDff <- rbind(resDff, resDffnotMot)
+  }
+  
+  if(!is.null(resDff)){
+    library(dplyr)
+    
+    if(GC_CORR){
+      resDff <- resDff %>%
+        group_by(Motif) %>%
+        summarise(Counts = sum(sum_GC_weight))
+      resDff <- as.data.frame(resDff)
+    }else{
+      resDff <- resDff %>%
+        group_by(Motif) %>%
+        summarise(Counts = sum(Counts))
+      resDff <- as.data.frame(resDff)
+    }
+    
+    resDff$Density <- (resDff$Counts/sum(resDff$Counts))*100
+  }
+  
+  df$CCCA[i] = resDff[resDff$Motif=="CCCA",]$Density
+  df$CCAG[i] = resDff[resDff$Motif=="CCAG",]$Density
+  df$CCTG[i] = resDff[resDff$Motif=="CCTG",]$Density
+  df$TAAA[i] = resDff[resDff$Motif=="TAAA",]$Density
+  df$AAAA[i] = resDff[resDff$Motif=="AAAA",]$Density
+  df$TTTT[i] = resDff[resDff$Motif=="TTTT",]$Density
+}
+
+
+save(df, file = paste0(dirSave,sample_name, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+
+#### pre-processing metrics ####
+
+preProcessingFragmetomicsFeaturesAsList <- function(AllSampleRatioList, NA_VALUE = "zero", SCALE_FEAT = FALSE, MINMAX_FEAT = FALSE, MOTIF = FALSE){
+  
+  samplesName <- names(AllSampleRatioList)
+  
+  if(!MOTIF){
+    AllSampleRatioList <- lapply(samplesName, function(sample){  
+      
+      x_gc <- AllSampleRatioList[[sample]]
+      
+      x <- c()
+      
+      x$mean <- x_gc$mean
+      x$coverage <- x_gc$coverage
+      x$coverageNucCore <- x_gc$coverageNucCore
+      x$coverageChrom <- x_gc$coverageChrom
+      x$coverageNuc <- x_gc$coverageNuc
+      x$ratio_NucCor_Nuc <- x_gc$coverageNucCore/x_gc$coverageNuc
+      x$ratio_NucCorChrom_Nuc <- (x_gc$coverageChrom+x_gc$coverageNucCore)/x_gc$coverageNuc
+      
+      if(any(is.infinite(x$ratio_NucCor_Nuc)) | any(is.infinite(x$ratio_NucCorChrom_Nuc)) | any(is.infinite(x$ratio)) ){
+        x$ratio_NucCor_Nuc[is.infinite(x$ratio_NucCor_Nuc)] <- max(x$ratio_NucCor_Nuc[!is.infinite(x$ratio_NucCor_Nuc)], na.rm = TRUE)
+        x$ratio_NucCorChrom_Nuc[is.infinite(x$ratio_NucCorChrom_Nuc)]  <- max(x$ratio_NucCorChrom_Nuc[!is.infinite(x$ratio_NucCorChrom_Nuc)], na.rm = TRUE)
+      }
+      
+      x
+    })
+    names(AllSampleRatioList) <- samplesName
+  }
+  
+  AllSampleRatioList <- lapply(samplesName, function(sample){  
+    
+    x <- AllSampleRatioList[[sample]]
+    
+    x <- lapply(x, function(y){
+      
+      if(NA_VALUE == "zero"){
+        y[is.na(y)] <- 0
+      }else{
+        y[is.na(y)] <- mean(y, na.rm = TRUE)
+      }
+      
+      if(SCALE_FEAT){
+        y <- as.numeric(scale(y))
+      }
+      
+      if(MINMAX_FEAT){
+        y <- minMaxNorm(y, min = min(y), max = max(y))
+      }
+      
+      y
+      
+    })
+    
+    
+  })
+  names(AllSampleRatioList) <- samplesName
+  AllSampleRatioList
+}
+
+#### compute local feature ####
+#features_sel = c("ent","mean", "std","cv", "ratio_NucCor_Nuc" , "ratio_Chrom_Nuc","ratio_NucCorChrom_Nuc", "ratio", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
+
+getMtxDiff_eCDF_Features_SINGLE_SAMP <- function(resSample, df_ALT_GR,pathFragm, pathFeat, features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"), ECDF = TRUE, MIN_SIZE_ALT = 1500000){
+  
+  region_GR <- getRegionBinSample(pathFeat)
+  
+  if(is.null(resSample)){
+    resSample <- list(get(load(pathFeat)))
+    names(resSample) <- pathFeat
+    resSample <- preProcessingFragmetomicsFeaturesAsList(resSample)[[1]]
+  }
+  
+  overlapGAIN <- findOverlaps(df_ALT_GR[df_ALT_GR$ALT=="GAIN",], region_GR, minoverlap = MIN_SIZE_ALT)
+  overlapLOSS <- findOverlaps(df_ALT_GR[df_ALT_GR$ALT=="LOSS",], region_GR, minoverlap = MIN_SIZE_ALT)
+  
+  plotFEAT <- lapply(features_sel, function(feat){
+    
+    resGAINfeat <- list(resSample[[feat]][overlapGAIN@to])
+    resGAINfeat <- as.data.frame(Reduce(rbind, resGAINfeat))
+    
+    resLOSSfeat <- list(resSample[[feat]][overlapLOSS@to])
+    resLOSSfeat <- as.data.frame(Reduce(rbind, resLOSSfeat))
+    
+    if(grepl("coverage", feat)){
+      normCov <- apply(resLOSSfeat, 2, median)
+      resGAINfeat <- resGAINfeat/normCov
+      resLOSSfeat <- resLOSSfeat/normCov
+    }
+    
+    minHIST <- min(min(resGAINfeat),min(resLOSSfeat))
+    maxHIST <- max(max(resGAINfeat),max(resLOSSfeat))
+    
+    if(!ECDF){
+      
+      seqBIN <- seq(minHIST,maxHIST, length.out = 100)
+      
+      res_histGAIN <- apply(resGAINfeat, 2, function(x){
+        res_hist <- hist(as.numeric(x), breaks = seqBIN)
+        res_hist$density
+      })
+      
+      res_histLOSS <- apply(resLOSSfeat, 2, function(x){
+        res_hist <- hist(as.numeric(x), breaks = seqBIN)
+        res_hist$density
+      })
+      
+    }else{
+      
+      seqBIN <- seq(minHIST,maxHIST, 0.01) 
+      
+      res_histGAIN <- apply(resGAINfeat, 2, function(x){
+        x <- as.numeric(x)
+        res_ecdf <- myECDFsingleValue(x)
+        res_ecdf <- as.data.frame(approx(res_ecdf$x, res_ecdf$cdf, seqBIN, yleft = 0, yright = 1, ties = "ordered"))
+        res_ecdf$y
+      })
+      
+      res_histLOSS <- apply(resLOSSfeat, 2, function(x){
+        x <- as.numeric(x)
+        res_ecdf <- myECDFsingleValue(x)
+        res_ecdf <- as.data.frame(approx(res_ecdf$x, res_ecdf$cdf, seqBIN, yleft = 0, yright = 1, ties = "ordered"))
+        res_ecdf$y
+      })
+      
+    }
+    
+    rm(seqBIN, resGAINfeat, resLOSSfeat)
+    
+    res_histDIFF <- res_histGAIN-res_histLOSS
+    rm(res_histGAIN, res_histLOSS)
+    res_histDIFF <- as.data.frame(res_histDIFF)
+    
+    df <- data.frame(Sum = sum(abs(res_histDIFF[,1])), Sd = sd(res_histDIFF[,1]))
+    colnames(df) <- paste(colnames(df),feat, sep = "_")
+    rm(res_histDIFF)
+    df
+    
+  })
+  
+  Reduce(cbind, plotFEAT)
+  
+}
+
+#### Extract CNV regions from Progenetix ####
+
 getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, FREQ_MANUAL_LOSS = NULL){
   
   if (!CLASS %in% names(CLASS_PARAMS_WGS)) {
