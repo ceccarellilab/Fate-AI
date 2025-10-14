@@ -46,8 +46,13 @@ feat_cfmedip <- getFeature_cfMeDIP(INITIAL_PATH = INITIAL_PATH, ALL_BAM_MEDIP_PA
 
 
 ##### WORKFLOW WGS #####
-
-#source(paste0(INITIAL_PATH, "scripts/lpWGS_features.R"))
+FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
+PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
+NUM_THREADS <- 10
+INITIAL_PATH <- "/home2/adefalco/Fate-AI/"
+ALL_BAM_WGS_DIR = "/home3/adefalco/Fate-AI/output_folder/BAM/"
+SUFFIX_BAM = "_recal.bam"
+source(paste0(INITIAL_PATH, "scripts/lpWGS_features.R"))
 
 # remotes::install_github("progenetix/pgxRpi")
 # library("pgxRpi")
@@ -57,23 +62,37 @@ feat_cfmedip <- getFeature_cfMeDIP(INITIAL_PATH = INITIAL_PATH, ALL_BAM_MEDIP_PA
 
 # Define mapping of class to frequency and file path
 CLASS_PARAMS_WGS <- list(
-  Colon          = list(freq = 25,  file = "data/progenetix/Colorectal_Carcinoma_NCIT_C2955.tsv"),
-  Lung           = list(freq = 25,  file = "data/progenetix/Lung_Carcinoma_NCIT_C4878.tsv"),
-  Prostate       = list(freq = 25,  file = "data/progenetix/Prostate_Carcinoma_NCIT_C4863.tsv"),
-  Urothelial     = list(freq = 22.5,file = "data/progenetix/Urothelial_Carcinoma_NCIT_C4030.tsv"),
-  EwS            = list(freq = 10,  file = "data/progenetix/Ewing_Sarcoma_NCIT_C4817.tsv"),
-  Mesotelioma    = list(freq = 15,  file = "data/progenetix/Malignant_Mesothelioma_NCIT_C4456.tsv"),
-  Melanoma       = list(freq = 20,  file = "data/progenetix/Melanoma_NCIT_C3224.tsv"),
-  Breast         = list(freq = 25,  file = "data/progenetix/Breast_Carcinoma_NCIT_C4872.tsv"),
-  Gliobastoma    = list(freq = 35,  file = "data/progenetix/Gliobastoma_NCIT_C3058.tsv"),
-  Astrocytoma    = list(freq = 25,  file = "data/progenetix/Astrocytoma_NCIT_C60781.tsv"),
-  Oligodendroglioma = list(freq = 25, file = "data/progenetix/Oligodendroglioma_NCIT_C3288.tsv"),
-  MPNST          = list(freq = 25,  file = "data/progenetix/MPNST_NCIT_C3798.tsv"),
-  MM             = list(freq = 25,  file = "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv"),
-  Pancreatic     = list(freq = 15,  file = "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv")
+  Colon          = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/Colorectal_Carcinoma_NCIT_C2955.tsv")),
+  Lung           = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/Lung_Carcinoma_NCIT_C4878.tsv")),
+  Prostate       = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/Prostate_Carcinoma_NCIT_C4863.tsv")),
+  Urothelial     = list(freq = 22.5,file = paste0(INITIAL_PATH, "data/progenetix/Urothelial_Carcinoma_NCIT_C4030.tsv")),
+  EwS            = list(freq = 10,  file = paste0(INITIAL_PATH, "data/progenetix/Ewing_Sarcoma_NCIT_C4817.tsv")),
+  Mesotelioma    = list(freq = 15,  file = paste0(INITIAL_PATH, "data/progenetix/Malignant_Mesothelioma_NCIT_C4456.tsv")),
+  Melanoma       = list(freq = 20,  file = paste0(INITIAL_PATH, "data/progenetix/Melanoma_NCIT_C3224.tsv")),
+  Breast         = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/Breast_Carcinoma_NCIT_C4872.tsv")),
+  Gliobastoma    = list(freq = 35,  file = paste0(INITIAL_PATH, "data/progenetix/Gliobastoma_NCIT_C3058.tsv")),
+  Astrocytoma    = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/Astrocytoma_NCIT_C60781.tsv")),
+  Oligodendroglioma = list(freq = 25, file = paste0(INITIAL_PATH, "data/progenetix/Oligodendroglioma_NCIT_C3288.tsv")),
+  MPNST          = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/MPNST_NCIT_C3798.tsv")),
+  MM             = list(freq = 25,  file = paste0(INITIAL_PATH, "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv")),
+  Pancreatic     = list(freq = 15,  file = paste0(INITIAL_PATH, "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv"))
 )
 
-getFeatureBasedOnCNV(AllSample, 
+ALL_BAM_WGS <- list.files(ALL_BAM_WGS_DIR, pattern = ".bam.bai", full.names = TRUE)
+ALL_BAM_WGS <- gsub(".bam.bai", ".bam", ALL_BAM_WGS)
+AllSample <- ALL_BAM_WGS
+AllSample <- gsub(ALL_BAM_WGS_DIR, "", AllSample)
+AllSample <- gsub(SUFFIX_BAM, "", AllSample)
+AllSample <- gsub("/", "", AllSample)
+
+saveFragmBIN_fromBam(PATH_INITIAL = INITIAL_PATH, sample = AllSample[1], bam = ALL_BAM_WGS[1], NUM_THREADS = NUM_THREADS, PATH_SAMTOOLS = PATH_SAMTOOLS, FASTA_FILE = FASTA_FILE)
+
+saveMetricsBIN(PATH_INITIAL = INITIAL_PATH, 
+                           sample = AllSample[1],
+                           NUM_THREADS = NUM_THREADS)
+
+
+feat_WGS <- getFeatureBasedOnCNV(AllSample, 
                      CLASS_CNV, 
                      NUM_THREADS = 30)
 
