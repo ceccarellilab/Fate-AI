@@ -188,7 +188,7 @@ saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "
                                      MIN_FRAG = 20,
                                      SUFFIX_SAVE_FILE = "_res_frag_motif.RData",
                                      tmp_dir = "/temp",
-                                     awk_file_filter = "filter_cfmedip.awk",
+                                     awk_file_filter = "scripts/filter_cfmedip.awk",
                                      BED_DIR = "data/bed_dmrs/",
                                      DMR_COUNT_DIR = "output/cfMeDIP/"){
 

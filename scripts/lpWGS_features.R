@@ -1,179 +1,190 @@
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
 
-args = commandArgs( trailingOnly = TRUE )
-sample = args[1] 
-bam = args[2]
-dirSave = args[3]
-BIN_SIZE = as.numeric(args[4])
-NUM_THREADS = as.numeric(args[5])
-FASTA_FILE = args[6]
-PATH_SAMTOOLS = args[7]
-MAPQ = as.numeric(args[8])
-MAX_FRAG_LENGHT = as.numeric(args[9])
-MIN_FRAG = 20
+saveFragmBIN_fromBam <- function(PATH_INITIAL = "/home2/adefalco/Fate-AI/", 
+                                 sample = args[1], 
+                                 bam = args[2],
+                                 BIN_SIZE = 3000000,
+                                 NUM_THREADS = 40,
+                                 FASTA_FILE = ,
+                                 PATH_SAMTOOLS = ,
+                                 MAPQ = 30,
+                                 MAX_FRAG_LENGHT = 550,
+                                 MIN_FRAG = 20,
+                                 SUFFIX_BAM = "_recal.bam",
+                                 PATH_OUTPUT_GC = "GC_correction_output",
+                                 SUFFIX_SAVE_FILE = "_res_frag_motif.RData",
+                                 OUTPUT_DIR = "output/WGS/",
+                                 FRAGM_DIR = "FRAGM_BIN/"){
 
-#SUFFIX_BAM <- "_recal.bam"
-SUFFIX_BAM <- gsub(".bam", "", args[10])
-PATH_OUTPUT_GC <- "GC_correction_output"
-SUFFIX_SAVE_FILE <- "_res_frag_motif.RData"
-
-path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
-
-dir.create(dirSave)
-
-PATH_INITIAL <- "/home3/adefalco/Fate-AI/"
-
-BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE), ".bed")
-
-library(parallel)
-library(dplyr)
-
-GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample,SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
-
-tmp_dir <- "/temp"
-awk_file_filter = paste0(PATH_INITIAL, "filter_wgs.awk")
-
-df_BED <- as.data.frame(read.csv(BEDFILE, sep = "\t"))
-regions <- apply(df_BED, 1, function(x) paste(gsub("chr","",x[1]), as.integer(x[2]), as.integer(x[3]) , sep = "-"))
-
-resFEATUREs <- mclapply(regions, function(region){
+  dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
   
-  print(region)
-  
-  region_data <-  strsplit(region, "-")[[1]]
-  region_data[1] <- paste0("chr", region_data[1])
-  position <- paste0(region_data[1],":",region_data[2],"-", region_data[3])
-  
-  watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", position, " | awk -v MIN_MAPQ=", 
-                   MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, 
-                   " -v CHR=", region_data[1], " -v R_START=", as.numeric(region_data[2]), 
-                   " -v R_END=", as.numeric(region_data[3]), " -v R_ID=", 
-                   region_data[6], " -f ", awk_file_filter)
-  
-  crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", 
-                  position, " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", 
-                  MAX_FRAG_LENGHT, " -v CHR=", region_data[1], 
-                  " -v R_START=", as.numeric(region_data[2]), " -v R_END=", 
-                  as.numeric(region_data[3]), " -v R_ID=", region_data[6], 
-                  " -f ", awk_file_filter)
-  
-  #### WATSON
-  
-  watsonFRAG <- tryCatch( 
-    {
-      read.csv(text = system(watson, intern = TRUE), 
-               header = FALSE, sep = "\t")
-    },
-    error = function(e) {
-      NULL
-    }
-  )
-  
-  crickFRAG <- tryCatch( 
-    {
-      read.csv(text = system(crick, intern = TRUE), 
-               header = FALSE, sep = "\t")
-    },
-    error = function(e) {
-      NULL
-    }
-  )
-  
-  
-  if (!is.null(watsonFRAG)){
-    watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG,]
-    watsonFRAG$V1 <- "watsonFRAG"
-  }
-  if (!is.null(crickFRAG)){
-    crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG,]
-    crickFRAG$V1 <- "crickFRAG"
+  if (!dir.exists(dirSave)) {
+    dir.create(dirSave)
   }
   
-  if(is.null(crickFRAG) & is.null(watsonFRAG)){
-    actualStrand <- NULL
-  }else if(!is.null(crickFRAG) & !is.null(watsonFRAG)){
-    actualStrand <- rbind(watsonFRAG,crickFRAG)
-  }else if(!is.null(crickFRAG)){
-    actualStrand <- crickFRAG
-  }else if(!is.null(watsonFRAG)){
-    actualStrand <- watsonFRAG
-  }
+  path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
   
+  BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE), ".bed")
   
-  if(!is.null(actualStrand)){
+  library(parallel)
+  library(dplyr)
+  
+  GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample,SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
+  
+  tmp_dir <- "/temp"
+  awk_file_filter = paste0(PATH_INITIAL, "scripts/filter_wgs.awk")
+  
+  df_BED <- as.data.frame(read.csv(BEDFILE, sep = "\t"))
+  regions <- apply(df_BED, 1, function(x) paste(gsub("chr","",x[1]), as.integer(x[2]), as.integer(x[3]) , sep = "-"))
+  
+  resFEATUREs <- mclapply(regions, function(region){
     
-    regions <- paste0(actualStrand$V6,":",actualStrand$V7,"-", actualStrand$V8-1)
-    regions <- as.list(regions)
-    d <- 1:length(regions)
-    chunks <- split(d, ceiling(seq_along(d)/5000))
+    print(region)
     
-    resChunks <- lapply(chunks, function(chunk){
-      
-      func2 <-  paste(PATH_SAMTOOLS, "faidx ",FASTA_FILE, do.call(paste, regions[chunk]))
-      MOTIFS <- system(func2, intern = TRUE)
-      MOTIFS[grep("chr", MOTIFS)] <- "-"
-      MOTIFS <- (MOTIFS[!grepl("chr", MOTIFS)])
-      MOTIFS <- do.call(paste0, as.list(MOTIFS))
-      MOTIFS <- substr(MOTIFS, 2, nchar(MOTIFS))
-      MOTIFS <- strsplit(MOTIFS, split = "-")
-      MOTIFS
-    })
+    region_data <-  strsplit(region, "-")[[1]]
+    region_data[1] <- paste0("chr", region_data[1])
+    position <- paste0(region_data[1],":",region_data[2],"-", region_data[3])
     
-    resChunks <- unlist(resChunks)
-    region_weights <-  lapply(resChunks, function(seq){
-      fragm_len <- nchar(seq)
-      GC_count <- (lengths(regmatches(seq, gregexpr("G", seq))))+(lengths(regmatches(seq, gregexpr("C", seq))))
-      round(GC_bias[(fragm_len-MIN_FRAG)+1,GC_count+1],5)
-    })
+    watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", position, " | awk -v MIN_MAPQ=", 
+                     MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, 
+                     " -v CHR=", region_data[1], " -v R_START=", as.numeric(region_data[2]), 
+                     " -v R_END=", as.numeric(region_data[3]), " -v R_ID=", 
+                     region_data[6], " -f ", awk_file_filter)
     
-    GC_weight <- unlist(region_weights)
-    actualStrand <- cbind(actualStrand, GC_weight)
+    crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", 
+                    position, " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", 
+                    MAX_FRAG_LENGHT, " -v CHR=", region_data[1], 
+                    " -v R_START=", as.numeric(region_data[2]), " -v R_END=", 
+                    as.numeric(region_data[3]), " -v R_ID=", region_data[6], 
+                    " -f ", awk_file_filter)
     
-    region_motifs <-  lapply(1:length(resChunks), function(num_seq){
-      seq <- resChunks[[num_seq]]
-      nameStrand <- actualStrand[num_seq,]$V1
-      if(nameStrand=="watsonFRAG"){
-        substr(seq, 1, 4)
-      }else if(nameStrand=="crickFRAG"){
-        substr(seq, nchar(seq)-3, nchar(seq))
+    #### WATSON
+    
+    watsonFRAG <- tryCatch( 
+      {
+        read.csv(text = system(watson, intern = TRUE), 
+                 header = FALSE, sep = "\t")
+      },
+      error = function(e) {
+        NULL
       }
+    )
+    
+    crickFRAG <- tryCatch( 
+      {
+        read.csv(text = system(crick, intern = TRUE), 
+                 header = FALSE, sep = "\t")
+      },
+      error = function(e) {
+        NULL
+      }
+    )
+    
+    
+    if (!is.null(watsonFRAG)){
+      watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG,]
+      watsonFRAG$V1 <- "watsonFRAG"
+    }
+    if (!is.null(crickFRAG)){
+      crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG,]
+      crickFRAG$V1 <- "crickFRAG"
+    }
+    
+    if(is.null(crickFRAG) & is.null(watsonFRAG)){
+      actualStrand <- NULL
+    }else if(!is.null(crickFRAG) & !is.null(watsonFRAG)){
+      actualStrand <- rbind(watsonFRAG,crickFRAG)
+    }else if(!is.null(crickFRAG)){
+      actualStrand <- crickFRAG
+    }else if(!is.null(watsonFRAG)){
+      actualStrand <- watsonFRAG
+    }
+    
+    
+    if(!is.null(actualStrand)){
       
-    })
+      regions <- paste0(actualStrand$V6,":",actualStrand$V7,"-", actualStrand$V8-1)
+      regions <- as.list(regions)
+      d <- 1:length(regions)
+      chunks <- split(d, ceiling(seq_along(d)/5000))
+      
+      resChunks <- lapply(chunks, function(chunk){
+        
+        func2 <-  paste(PATH_SAMTOOLS, "faidx ",FASTA_FILE, do.call(paste, regions[chunk]))
+        MOTIFS <- system(func2, intern = TRUE)
+        MOTIFS[grep("chr", MOTIFS)] <- "-"
+        MOTIFS <- (MOTIFS[!grepl("chr", MOTIFS)])
+        MOTIFS <- do.call(paste0, as.list(MOTIFS))
+        MOTIFS <- substr(MOTIFS, 2, nchar(MOTIFS))
+        MOTIFS <- strsplit(MOTIFS, split = "-")
+        MOTIFS
+      })
+      
+      resChunks <- unlist(resChunks)
+      region_weights <-  lapply(resChunks, function(seq){
+        fragm_len <- nchar(seq)
+        GC_count <- (lengths(regmatches(seq, gregexpr("G", seq))))+(lengths(regmatches(seq, gregexpr("C", seq))))
+        round(GC_bias[(fragm_len-MIN_FRAG)+1,GC_count+1],5)
+      })
+      
+      GC_weight <- unlist(region_weights)
+      actualStrand <- cbind(actualStrand, GC_weight)
+      
+      region_motifs <-  lapply(1:length(resChunks), function(num_seq){
+        seq <- resChunks[[num_seq]]
+        nameStrand <- actualStrand[num_seq,]$V1
+        if(nameStrand=="watsonFRAG"){
+          substr(seq, 1, 4)
+        }else if(nameStrand=="crickFRAG"){
+          substr(seq, nchar(seq)-3, nchar(seq))
+        }
+        
+      })
+      
+      end_motif <- unlist(region_motifs)
+      actualStrand <- cbind(actualStrand, end_motif)
+      
+      region_motifs <- as.data.frame(actualStrand %>% dplyr::group_by(end_motif) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
+      colnames(region_motifs) <- c("Motif", "sum_GC_weight", "Counts")
+      
+      region_weights <- as.data.frame(actualStrand %>% dplyr::group_by(V9) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
+      colnames(region_weights) <- c("Frag_len", "sum_GC_weight", "num_frag")
+      
+      list_res <- list(region_weights, region_motifs)
+      names(list_res) <- c("region_weights","region_motifs")
+      list_res
+    }else{
+      NULL
+    }
     
-    end_motif <- unlist(region_motifs)
-    actualStrand <- cbind(actualStrand, end_motif)
-    
-    region_motifs <- as.data.frame(actualStrand %>% dplyr::group_by(end_motif) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
-    colnames(region_motifs) <- c("Motif", "sum_GC_weight", "Counts")
-    
-    region_weights <- as.data.frame(actualStrand %>% dplyr::group_by(V9) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
-    colnames(region_weights) <- c("Frag_len", "sum_GC_weight", "num_frag")
-    
-    list_res <- list(region_weights, region_motifs)
-    names(list_res) <- c("region_weights","region_motifs")
-    list_res
-  }else{
-    NULL
-  }
+  }, mc.cores = NUM_THREADS)
   
-}, mc.cores = NUM_THREADS)
+  names(resFEATUREs) <- regions
+  
+  save(resFEATUREs, file = path_output)
 
-names(resFEATUREs) <- regions
-
-save(resFEATUREs, file = path_output)
+}
 
 ##### Compute metrics in 3Mb region ####
 
-args = commandArgs( trailingOnly = TRUE )
-sample_name = args[1] 
-dirRead = args[2]
-dirSave = args[3]
-BIN_SIZE = as.numeric(args[4])
-NUM_THREADS = as.numeric(args[5])
-dirWorkflow = args[6]
+saveMetricsBIN <- function(sample = args[1],
+                           dirRead = ,
+                           dirSave = ,
+                           BIN_SIZE = 3000000,
+                           NUM_THREADS = 40,
+                           dirWorkflow = ,
+                           GC_CORR = TRUE,
+                           OUTPUT_DIR = "output/WGS/",
+                           FRAGM_DIR = "FRAGM_BIN/",
+                           METRICS_DIR = "METRICS_DIR/"){
 
-GC_CORR = TRUE
+dirRead <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
+dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
 
+if (!dir.exists(dirSave)) {
+  dir.create(dirSave)
+}
+  
 dir.create(dirSave)
 setwd(dirSave)
 
@@ -292,8 +303,9 @@ for(i in 1:length(resFEATUREs)){
   df$TTTT[i] = resDff[resDff$Motif=="TTTT",]$Density
 }
 
-
 save(df, file = paste0(dirSave,sample_name, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+
+}
 
 #### pre-processing metrics ####
 
@@ -620,34 +632,3 @@ getFeatureBasedOnCNV <- function(AllSample,
 }
 
 
-
-####### WORKFLOW #####
-
-# remotes::install_github("progenetix/pgxRpi")
-# library("pgxRpi")
-# frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
-#                        filters=c("NCIT:C3224"))
-# pgxFreqplot(frequency)
-
-# Define mapping of class to frequency and file path
-CLASS_PARAMS_WGS <- list(
-  Colon          = list(freq = 25,  file = "data/progenetix/Colorectal_Carcinoma_NCIT_C2955.tsv"),
-  Lung           = list(freq = 25,  file = "data/progenetix/Lung_Carcinoma_NCIT_C4878.tsv"),
-  Prostate       = list(freq = 25,  file = "data/progenetix/Prostate_Carcinoma_NCIT_C4863.tsv"),
-  Urothelial     = list(freq = 22.5,file = "data/progenetix/Urothelial_Carcinoma_NCIT_C4030.tsv"),
-  EwS            = list(freq = 10,  file = "data/progenetix/Ewing_Sarcoma_NCIT_C4817.tsv"),
-  Mesotelioma    = list(freq = 15,  file = "data/progenetix/Malignant_Mesothelioma_NCIT_C4456.tsv"),
-  Melanoma       = list(freq = 20,  file = "data/progenetix/Melanoma_NCIT_C3224.tsv"),
-  Breast         = list(freq = 25,  file = "data/progenetix/Breast_Carcinoma_NCIT_C4872.tsv"),
-  Gliobastoma    = list(freq = 35,  file = "data/progenetix/Gliobastoma_NCIT_C3058.tsv"),
-  Astrocytoma    = list(freq = 25,  file = "data/progenetix/Astrocytoma_NCIT_C60781.tsv"),
-  Oligodendroglioma = list(freq = 25, file = "data/progenetix/Oligodendroglioma_NCIT_C3288.tsv"),
-  MPNST          = list(freq = 25,  file = "data/progenetix/MPNST_NCIT_C3798.tsv"),
-  MM             = list(freq = 25,  file = "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv"),
-  Pancreatic     = list(freq = 15,  file = "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv")
-)
-
-getFeatureBasedOnCNV <- function(AllSample, 
-                                 CLASS_CNV, 
-                                 NUM_THREADS = 30,
-                                 features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"))

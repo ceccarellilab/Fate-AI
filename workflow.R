@@ -11,7 +11,7 @@ SUFFIX_BAM = ".sorted.bam"
 #BED_DIR <- "data/bed_dmrs"
 #N_TOP <- 3000
 
-source(paste0(INITIAL_PATH, "cfMeDIP_features.R"))
+source(paste0(INITIAL_PATH, "scripts/cfMeDIP_features.R"))
 
 CLASS_TO_TCGA <- list(
   "Hyper_Colon"       = "TCGA_COAD",
@@ -47,11 +47,35 @@ feat_cfmedip <- getFeature_cfMeDIP(INITIAL_PATH = INITIAL_PATH, ALL_BAM_MEDIP_PA
 
 ##### WORKFLOW WGS #####
 
+#source(paste0(INITIAL_PATH, "scripts/lpWGS_features.R"))
 
+# remotes::install_github("progenetix/pgxRpi")
+# library("pgxRpi")
+# frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
+#                        filters=c("NCIT:C3224"))
+# pgxFreqplot(frequency)
 
+# Define mapping of class to frequency and file path
+CLASS_PARAMS_WGS <- list(
+  Colon          = list(freq = 25,  file = "data/progenetix/Colorectal_Carcinoma_NCIT_C2955.tsv"),
+  Lung           = list(freq = 25,  file = "data/progenetix/Lung_Carcinoma_NCIT_C4878.tsv"),
+  Prostate       = list(freq = 25,  file = "data/progenetix/Prostate_Carcinoma_NCIT_C4863.tsv"),
+  Urothelial     = list(freq = 22.5,file = "data/progenetix/Urothelial_Carcinoma_NCIT_C4030.tsv"),
+  EwS            = list(freq = 10,  file = "data/progenetix/Ewing_Sarcoma_NCIT_C4817.tsv"),
+  Mesotelioma    = list(freq = 15,  file = "data/progenetix/Malignant_Mesothelioma_NCIT_C4456.tsv"),
+  Melanoma       = list(freq = 20,  file = "data/progenetix/Melanoma_NCIT_C3224.tsv"),
+  Breast         = list(freq = 25,  file = "data/progenetix/Breast_Carcinoma_NCIT_C4872.tsv"),
+  Gliobastoma    = list(freq = 35,  file = "data/progenetix/Gliobastoma_NCIT_C3058.tsv"),
+  Astrocytoma    = list(freq = 25,  file = "data/progenetix/Astrocytoma_NCIT_C60781.tsv"),
+  Oligodendroglioma = list(freq = 25, file = "data/progenetix/Oligodendroglioma_NCIT_C3288.tsv"),
+  MPNST          = list(freq = 25,  file = "data/progenetix/MPNST_NCIT_C3798.tsv"),
+  MM             = list(freq = 25,  file = "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv"),
+  Pancreatic     = list(freq = 15,  file = "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv")
+)
 
-
-
+getFeatureBasedOnCNV(AllSample, 
+                     CLASS_CNV, 
+                     NUM_THREADS = 30)
 
 
 #### Feature WGS and Medip for each cancer type and healthy samples (respect to specific region) (from /home3/adefalco/Fate-AI/ADAPTIVE_ANALYSIS/1_getFeat.R) FOR FIGURE 4 ####
