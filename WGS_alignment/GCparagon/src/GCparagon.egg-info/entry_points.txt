@@ -1,0 +1,2 @@
+[console_scripts]
+gcparagon = GCparagon.correct_GC_bias:main

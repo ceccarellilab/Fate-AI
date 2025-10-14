@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: GCparagon
+Version: 0.5.4
+Summary: commandline tool to correct GC bias in cfDNA WGS data
+Home-page: https://github.com/BGSpiegl/GCparagon
+Author: Benjamin Spiegl
+Author-email: benjamin.spiegl@medunigraz.at
+License-File: LICENSE

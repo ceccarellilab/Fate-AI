@@ -1,0 +1,16 @@
+LICENSE
+README.md
+setup.py
+src/GCparagon/__init__.py
+src/GCparagon/correct_GC_bias.py
+src/GCparagon/profile_command.py
+src/GCparagon.egg-info/PKG-INFO
+src/GCparagon.egg-info/SOURCES.txt
+src/GCparagon.egg-info/dependency_links.txt
+src/GCparagon.egg-info/entry_points.txt
+src/GCparagon.egg-info/top_level.txt
+src/GCparagon/utilities/__init__.py
+src/GCparagon/utilities/gc_logging.py
+src/GCparagon/utilities/plot_GC_matrices.py
+src/GCparagon/utilities/plot_distributions.py
+src/GCparagon/utilities/secure_file_handling.py
