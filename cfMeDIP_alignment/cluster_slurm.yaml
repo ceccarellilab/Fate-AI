@@ -1,0 +1,23 @@
+__default__:
+  partition: biopartition
+  time: "48:0:0"
+  ntasks: 1
+  mem: 25G
+  output: logs/cluster/{rule}.{wildcards.sample}.%A.out
+  JobName: "{rule}.{wildcards.sample}"
+
+fastqc_initial:
+  ncpus: 1
+
+trim_galore:
+  ncpus: 1
+
+bowtie2_map:
+  ncpus: 40
+  mem: 50G
+
+sort_index_bam:
+  ncpus: 1
+
+mark_duplicates:
+  ncpus: 1
