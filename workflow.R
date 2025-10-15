@@ -21,8 +21,7 @@ CLASS_TO_TCGA <- list(
   "Hyper_Prostate"    = "TCGA-PRAD",
   "Hyper_Melanoma"    = "TCGA-SKCM",
   "Hyper_Mesotelioma" = "TCGA-MESO",
-  "Hyper_Urothelial"  = "TCGA-BLCA"#,
-  #"Hyper_Gliobastoma" = "TCGA-GBM"
+  "Hyper_Urothelial"  = "TCGA-BLCA"
 )
 
 
@@ -89,15 +88,11 @@ CLASS_PARAMS_WGS <- list(
   Mesotelioma    = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/Malignant_Mesothelioma_NCIT_C4456.tsv")),
   Melanoma       = list(freq = 20,  file = paste0(PATH_INITIAL, "data/progenetix/Melanoma_NCIT_C3224.tsv")),
   Breast         = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Breast_Carcinoma_NCIT_C4872.tsv")),
-  Gliobastoma    = list(freq = 35,  file = paste0(PATH_INITIAL, "data/progenetix/Gliobastoma_NCIT_C3058.tsv")),
-  Astrocytoma    = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Astrocytoma_NCIT_C60781.tsv")),
-  Oligodendroglioma = list(freq = 25, file = paste0(PATH_INITIAL, "data/progenetix/Oligodendroglioma_NCIT_C3288.tsv")),
-  MPNST          = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/MPNST_NCIT_C3798.tsv")),
   MM             = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv")),
   Pancreatic     = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv"))
 )
 
-feat_WGS <- getFeatureBasedOnCNV(c(AllSample, AllSample), PATH_INITIAL = PATH_INITIAL, 
+feat_WGS <- getFeatureBasedOnCNV(AllSample, PATH_INITIAL = PATH_INITIAL, 
                                  CLASS_CNV = names(CLASS_PARAMS_WGS)[1], 
                                  NUM_THREADS = 30)
 
