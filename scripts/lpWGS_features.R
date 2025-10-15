@@ -1,3 +1,20 @@
+
+getDirFragm <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/"){
+  dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
+  if (!dir.exists(dirSave)) {
+    dir.create(dirSave)
+  }
+  dirSave
+}
+
+getPathFragm <- function(PATH_INITIAL = "./", sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/",  BIN_SIZE = 3000000,SUFFIX_SAVE_FILE = "_res_frag_motif.RData"){
+  dirSave <- getDirFragm(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
+  path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
+  path_output
+}
+
+
+
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
 
 saveFragmBIN_fromBam <- function(PATH_INITIAL = "./", 
@@ -11,25 +28,19 @@ saveFragmBIN_fromBam <- function(PATH_INITIAL = "./",
                                  MAPQ = 30,
                                  MAX_FRAG_LENGHT = 550,
                                  MIN_FRAG = 20,
-                                 PATH_OUTPUT_GC = "GC_correction_output",
+                                 PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output",
                                  SUFFIX_SAVE_FILE = "_res_frag_motif.RData",
                                  OUTPUT_DIR = "output/WGS/",
                                  FRAGM_DIR = "FRAGM_BIN/"){
 
-  dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
-  
-  if (!dir.exists(dirSave)) {
-    dir.create(dirSave)
-  }
-  
-  path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
+  path_output <- getPathFragm(PATH_INITIAL, sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE, SUFFIX_SAVE_FILE)
   
   BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE), ".bed")
   
   library(parallel)
   library(dplyr)
   
-  GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample,SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
+  GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample, SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
   
   tmp_dir <- "/temp"
   awk_file_filter = paste0(PATH_INITIAL, "scripts/filter_wgs.awk")
@@ -167,6 +178,20 @@ saveFragmBIN_fromBam <- function(PATH_INITIAL = "./",
 
 ##### Compute metrics in 3Mb region ####
 
+getDirMetrics <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_DIR/"){
+  dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
+  if (!dir.exists(dirSave)) {
+    dir.create(dirSave)
+  }
+  dirSave
+}
+
+getPathMetrics <- function(PATH_INITIAL = "./", sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_DIR/",  BIN_SIZE = 3000000){
+  dirSave <- getDirMetrics(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
+  path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
+  path_output
+}
+
 saveMetricsBIN <- function(PATH_INITIAL = "./", 
                            sample,
                            BIN_SIZE = 3000000,
@@ -176,8 +201,8 @@ saveMetricsBIN <- function(PATH_INITIAL = "./",
                            FRAGM_DIR = "FRAGM_BIN/",
                            METRICS_DIR = "METRICS_DIR/"){
 
-dirRead <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
-dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
+#dirRead <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
+#dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
 
 if (!dir.exists(dirSave)) {
   dir.create(dirSave)
@@ -203,10 +228,15 @@ coverage_nucleosome <- function(frag_lengths){
   sum(frag_lengths>=MIN_NUCLEOSOME  & frag_lengths<= MAX_NUCLEOSOME)
 }    
 
-path_fragm_data <- paste0(dirRead, sample_name, "_", as.integer(BIN_SIZE), "_res_frag_motif.RData")
-path_output <- paste0(dirSave,sample_name, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
+#path_fragm_data <- paste0(dirRead, sample, "_", as.integer(BIN_SIZE), "_res_frag_motif.RData")
 
-print(sample_name)
+path_fragm_data <- getPathFragm(PATH_INITIAL, sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE)
+
+path_output <- getPathMetrics(PATH_INITIAL,sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE)
+
+#path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
+
+print(sample)
 
 load(path_fragm_data)
 
@@ -246,7 +276,7 @@ for(i in 1:length(resFEATUREs)){
   
 }
 
-save(df, file = paste0(dirSave,sample_name, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+save(df, file = paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
 
 df <- data.frame(row.names = names(resFEATUREs))
 
@@ -301,7 +331,7 @@ for(i in 1:length(resFEATUREs)){
   df$TTTT[i] = resDff[resDff$Motif=="TTTT",]$Density
 }
 
-save(df, file = paste0(dirSave,sample_name, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+save(df, file = paste0(dirSave,sample, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"))
 
 }
 
@@ -511,9 +541,9 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
 #### Extract WGS features based on CNV regions from Progenetix ####
 
 getFeatureBasedOnCNV <- function(AllSample, 
+          PATH_INITIAL,
           CLASS_CNV, 
           NUM_THREADS = 30,
-          MIN_MAX_NORM = FALSE, 
           FREQ = NULL, 
           MIN_SIZE_ALT = 1500000, 
           features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"),   
@@ -522,19 +552,30 @@ getFeatureBasedOnCNV <- function(AllSample,
           AGGREGATE_BIN = TRUE,
           MIN_FRAG_SIZE = 50,
           MAX_FRAG_SIZE =  250,
+          BIN_SIZE = 3000000,
           AMPs = c("GAIN",  "LOSS")){
   
   # GET CNV REGIONS FROM PROGENETIX
   CNV_regions <- getCNV_Regions(CLASS_CNV, FREQ_MANUAL = FREQ)
   
-  res_Density <- parallel::mclapply(1:nrow(AllSample), function(i){
+  #PathFragmentomics
+  #PathMetrics  
+  
+  res_Density <- parallel::mclapply(AllSample, function(sample){
     
-    sample <- AllSample[i,]
+
     print(sample$FASTQ_Name)
     
-    load(sample$PathFragmentomics)
+    getpat
     
-    region_GR <- getRegionBinSample(sample$PathFeatures)
+    pathFragm <- getPathFragm(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
+    load(pathFragm)
+    
+    pathMetrics <- getPathMetrics(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
+    
+    #load(sample$PathFragmentomics)
+    region_GR <- getRegionBinSample(pathMetrics)
+    #region_GR <- getRegionBinSample(sample$PathFeatures)
     
     print(table(CNV_regions$ALT))
     
@@ -613,10 +654,14 @@ getFeatureBasedOnCNV <- function(AllSample,
   rm(res_Density)
   
   #Local Features
-  resECDF_ALL <- parallel::mclapply(1:nrow(AllSample), function(i){
+  resECDF_ALL <- parallel::mclapply(1:nrow(AllSample), function(sample){
     
-    MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = AllSample$PathFeatures[i], features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
-    rownames(MTX) <- AllSample$FASTQ_Name[i]
+    pathMetrics <- getPathMetrics(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
+    MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = pathMetrics, features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
+    rownames(MTX) <- sample
+    
+    #MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = AllSample$PathFeatures[i], features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
+    #rownames(MTX) <- AllSample$FASTQ_Name[i]
     
     MTX
   }, mc.cores = NUM_THREADS)
@@ -630,12 +675,7 @@ getFeatureBasedOnCNV <- function(AllSample,
   list_features_mtx <- list_features_mtx[unlist(lapply(list_features_mtx, function(x) !is.null(x)))]
   MTX <- Reduce(cbind, list_features_mtx) 
   
-  if(MIN_MAX_NORM){
-    MTX <- normalizeMatrixDataset(MTX, AllSample)
-  }else{
-    MTX
-  } 
-  
+  MTX
 }
 
 

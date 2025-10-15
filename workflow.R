@@ -50,7 +50,7 @@ FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
 PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
 NUM_THREADS <- 10
 INITIAL_PATH <- "/home2/adefalco/Fate-AI/"
-ALL_BAM_WGS_DIR = "/home3/adefalco/Fate-AI/output_folder/BAM/"
+ALL_BAM_WGS_DIR = "/home2/adefalco/Fate-AI/WGS_alignment/output_folder/BAM/"
 SUFFIX_BAM = "_recal.bam"
 source(paste0(INITIAL_PATH, "scripts/lpWGS_features.R"))
 
@@ -59,6 +59,25 @@ source(paste0(INITIAL_PATH, "scripts/lpWGS_features.R"))
 # frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
 #                        filters=c("NCIT:C3224"))
 # pgxFreqplot(frequency)
+
+
+ALL_BAM_WGS <- list.files(ALL_BAM_WGS_DIR, pattern = ".bam.bai", full.names = TRUE)
+ALL_BAM_WGS <- gsub(".bam.bai", ".bam", ALL_BAM_WGS)
+AllSample <- ALL_BAM_WGS
+AllSample <- gsub(ALL_BAM_WGS_DIR, "", AllSample)
+AllSample <- gsub(SUFFIX_BAM, "", AllSample)
+AllSample <- gsub("/", "", AllSample)
+
+AllSample_df <- data.frame(sample = AllSample, pathBAM = ALL_BAM_WGS, row.names = AllSample)
+
+EXAMPLE_SAMPLE <- "LB-CRC-32-P-02"
+SAMPLE <- AllSample_df[EXAMPLE_SAMPLE,]$sample
+BAM <- AllSample_df[EXAMPLE_SAMPLE,]$pathBAM
+saveFragmBIN_fromBam(PATH_INITIAL = INITIAL_PATH, sample = SAMPLE, bam = BAM, NUM_THREADS = NUM_THREADS, PATH_SAMTOOLS = PATH_SAMTOOLS, FASTA_FILE = FASTA_FILE, SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM))
+
+saveMetricsBIN(PATH_INITIAL = INITIAL_PATH, 
+               sample = sample,
+               NUM_THREADS = NUM_THREADS)
 
 # Define mapping of class to frequency and file path
 CLASS_PARAMS_WGS <- list(
@@ -78,22 +97,8 @@ CLASS_PARAMS_WGS <- list(
   Pancreatic     = list(freq = 15,  file = paste0(INITIAL_PATH, "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv"))
 )
 
-ALL_BAM_WGS <- list.files(ALL_BAM_WGS_DIR, pattern = ".bam.bai", full.names = TRUE)
-ALL_BAM_WGS <- gsub(".bam.bai", ".bam", ALL_BAM_WGS)
-AllSample <- ALL_BAM_WGS
-AllSample <- gsub(ALL_BAM_WGS_DIR, "", AllSample)
-AllSample <- gsub(SUFFIX_BAM, "", AllSample)
-AllSample <- gsub("/", "", AllSample)
-
-saveFragmBIN_fromBam(PATH_INITIAL = INITIAL_PATH, sample = AllSample[1], bam = ALL_BAM_WGS[1], NUM_THREADS = NUM_THREADS, PATH_SAMTOOLS = PATH_SAMTOOLS, FASTA_FILE = FASTA_FILE)
-
-saveMetricsBIN(PATH_INITIAL = INITIAL_PATH, 
-                           sample = AllSample[1],
-                           NUM_THREADS = NUM_THREADS)
-
-
 feat_WGS <- getFeatureBasedOnCNV(AllSample, 
-                     CLASS_CNV, 
+                     names(CLASS_PARAMS_WGS)[1], 
                      NUM_THREADS = 30)
 
 
