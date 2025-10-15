@@ -1,5 +1,5 @@
 CONFIG_FILE="/home2/adefalco/LiquidBiopsy_Data/cfMedip/pipeline/config_Mel.yaml"
-FIXED_CONDA_PATH="/home2/adefalco/Fate-AI/output_folder/.snakemake/conda/"
+FIXED_CONDA_PATH="/home2/adefalco/Fate-AI/cfMeDIP_alignment/.snakemake/conda/"
 SAMPLE_IN_PARALLEL="4"
 
 ## ALIGNMENT

@@ -1,5 +1,5 @@
-CONFIG_FILE="/home2/adefalco/LiquidBiopsy_Data/WGS/TEST_PIPELINE_VARIANT/Config/ENV_USER_OPTIONS.yaml"
-FIXED_CONDA_PATH="/home3/adefalco/Fate-AI/output_folder/.snakemake/conda/"
+CONFIG_FILE="/home2/adefalco/Fate-AI/WGS_alignment/Config/ENV_USER_OPTIONS.yaml"
+FIXED_CONDA_PATH="/home2/adefalco/Fate-AI/WGS_alignment/output_folder/.snakemake/conda/"
 SAMPLE_IN_PARALLEL="4"
 
 #### ALIGNMENT #####
