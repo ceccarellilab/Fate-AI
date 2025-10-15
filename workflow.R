@@ -3,7 +3,7 @@
 FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
 PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
 NUM_THREADS <- 10
-PATH_INITIAL <- "/home2/adefalco/Fate-AI"
+PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/FIGURE/FIGURES_paper/test_script/TEST_BAM_MEDIP"
 SUFFIX_BAM = ".sorted.bam"
 
@@ -59,7 +59,6 @@ source(paste0(PATH_INITIAL, "scripts/lpWGS_features.R"))
 #                        filters=c("NCIT:C3224"))
 # pgxFreqplot(frequency)
 
-
 ALL_BAM_WGS <- list.files(ALL_BAM_WGS_DIR, pattern = ".bam.bai", full.names = TRUE)
 ALL_BAM_WGS <- gsub(".bam.bai", ".bam", ALL_BAM_WGS)
 AllSample <- ALL_BAM_WGS
@@ -106,120 +105,117 @@ CLASS <- "Colon"
 METHOD_CLASSIFIER <- "glmnet"
 MODEL <- "Fate-AI(+Meth)"
 
-      load(paste0("/home3/adefalco/Fate-AI/ADAPTIVE_ANALYSIS/SAVE_FILE/",CLASS,"_new_feat_WGS_adaptive_with_medip.RData"))
- 
-      #load("/home3/adefalco/Fate-AI/ADAPTIVE_ANALYSIS/SAVE_FILE/Lung_new_feat_WGS_adaptive.RData")
-      AllSample_OK <- AllSample_OK_sub
-      rownames(AllSample_OK) <- AllSample_OK$IC_code
-      rownames(feat_mtx) <- rownames(AllSample_OK)
-      feat_mtx <- feat_mtx[rownames(AllSample),]
-      medip_mtx <- feat_mtx[, grepl("Ratio|Score", colnames(feat_mtx))]
-      feat_mtx <- feat_mtx[, !grepl("Ratio|Score", colnames(feat_mtx))]
+load(paste0("/home3/adefalco/Fate-AI/ADAPTIVE_ANALYSIS/SAVE_FILE/",CLASS,"_new_feat_WGS_adaptive_with_medip.RData"))
+
+#load("/home3/adefalco/Fate-AI/ADAPTIVE_ANALYSIS/SAVE_FILE/Lung_new_feat_WGS_adaptive.RData")
+AllSample_OK <- AllSample_OK_sub
+rownames(AllSample_OK) <- AllSample_OK$IC_code
+rownames(feat_mtx) <- rownames(AllSample_OK)
+feat_mtx <- feat_mtx[rownames(AllSample),]
+medip_mtx <- feat_mtx[, grepl("Ratio|Score", colnames(feat_mtx))]
+feat_mtx <- feat_mtx[, !grepl("Ratio|Score", colnames(feat_mtx))]
+
+delfix_mtx <- feat_mtx[, grepl(CLASS, colnames(feat_mtx))]
+
+if(MODEL == "Fate-AI"){
+  
+  feat_mtx <- getFeatureBasedOnCN(AllSample, CLASS)
+  METHOD_CLASSIFIER <- "glmnet"
+  
+  feat_mtx <- normalizeMatrixDataset(feat_mtx, AllSample)
+  
+}else if(MODEL == "Fate-AI(+Meth)"){
+  
+  feat_mtx <- getFeatureBasedOnCN(AllSample, CLASS)
+  medip_mtx <- getFeatMEDIP_last_COUNT(AllSample)
+  feat_mtx <- cbind(feat_mtx, medip_mtx)
+  
+  METHOD_CLASSIFIER <- "glmnet"
+  
+  feat_mtx <- normalizeMatrixDataset(feat_mtx, AllSample)
+}
+
+file_name = paste(MODEL, CLASS, METHOD_CLASSIFIER, sep = "_")
+if(FILTER_BIOGEM_TF) file_name <- paste0(file_name, "_tf_filtered")
+file_name <- paste0(file_name, ".RData")
+
+
+  if(class(combinations)!="data.frame"){
+    num_elem <- length(combinations)
+  }else{
+    num_elem <- nrow(combinations)
+  }
+  
+  print(paste0("combinations"))
+  print(combinations)
+  
+  resAUCs <- parallel::mclapply(1:num_elem, function(i){
+    
+    if(class(combinations)!="data.frame"){
+      combinations_sub <- combinations[[i]]
+    }else{
+      combinations_sub <- combinations[i,]
+    }
+    
+    
+    print(combinations_sub)
+    MTX_sub <- MTX[which(AllSample$Dataset %in% c(combinations_sub$TRAIN, combinations_sub$TEST)),]
+    AllSample_SUB <- AllSample[which(AllSample$Dataset %in% c(combinations_sub$TRAIN, combinations_sub$TEST)),] 
+    
+    if(any(combinations_sub$TRAIN %in% combinations_sub$TEST)){
       
-      delfix_mtx <- feat_mtx[, grepl(CLASS, colnames(feat_mtx))]
+      prediction <- classifyMATRIX(MTX_sub, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, method = METHOD_CLASSIFIER)
+      TYPE = "100x10fold-CV"
       
-      if(MODEL == "Fate-AI"){
-        
-        feat_mtx <- getFeatureBasedOnCN(AllSample, CLASS)
-        METHOD_CLASSIFIER <- "glmnet"
-        
-        feat_mtx <- normalizeMatrixDataset(feat_mtx, AllSample)
-        
-      }else if(MODEL == "Fate-AI(+Meth)"){
-        
-        feat_mtx <- getFeatureBasedOnCN(AllSample, CLASS)
-        medip_mtx <- getFeatMEDIP_last_COUNT(AllSample)
-        feat_mtx <- cbind(feat_mtx, medip_mtx)
-        
-        METHOD_CLASSIFIER <- "glmnet"
-        
-        feat_mtx <- normalizeMatrixDataset(feat_mtx, AllSample)
-      }
+      TRAIN_SAMP <- paste(rownames(AllSample_SUB), collapse = ";")
+      TEST_SAMP <- paste(rownames(AllSample_SUB), collapse = ";")
+      NUM_CLASS_TRAIN <- table(AllSample_SUB$Class)
+      NUM_CLASS_TEST <- table(AllSample_SUB$Class)
       
-      file_name = paste(MODEL, CLASS, METHOD_CLASSIFIER, sep = "_")
-      if(FILTER_BIOGEM_TF) file_name <- paste0(file_name, "_tf_filtered")
-      file_name <- paste0(file_name, ".RData")
+      NUM_CLASS_TRAIN <- paste(paste(names(NUM_CLASS_TRAIN), NUM_CLASS_TRAIN, sep = ":"), collapse = ";")
+      NUM_CLASS_TEST <- paste(paste(names(NUM_CLASS_TEST), NUM_CLASS_TEST, sep = ":"), collapse = ";")
       
+    }else{
       
-        if(class(combinations)!="data.frame"){
-          num_elem <- length(combinations)
-        }else{
-          num_elem <- nrow(combinations)
-        }
-        
-        print(paste0("combinations"))
-        print(combinations)
-        
-        resAUCs <- parallel::mclapply(1:num_elem, function(i){
-          
-          if(class(combinations)!="data.frame"){
-            combinations_sub <- combinations[[i]]
-          }else{
-            combinations_sub <- combinations[i,]
-          }
-          
-          
-          print(combinations_sub)
-          MTX_sub <- MTX[which(AllSample$Dataset %in% c(combinations_sub$TRAIN, combinations_sub$TEST)),]
-          AllSample_SUB <- AllSample[which(AllSample$Dataset %in% c(combinations_sub$TRAIN, combinations_sub$TEST)),] 
-          
-          if(any(combinations_sub$TRAIN %in% combinations_sub$TEST)){
-            
-            prediction <- classifyMATRIX(MTX_sub, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, method = METHOD_CLASSIFIER)
-            TYPE = "100x10fold-CV"
-            
-            TRAIN_SAMP <- paste(rownames(AllSample_SUB), collapse = ";")
-            TEST_SAMP <- paste(rownames(AllSample_SUB), collapse = ";")
-            NUM_CLASS_TRAIN <- table(AllSample_SUB$Class)
-            NUM_CLASS_TEST <- table(AllSample_SUB$Class)
-            
-            NUM_CLASS_TRAIN <- paste(paste(names(NUM_CLASS_TRAIN), NUM_CLASS_TRAIN, sep = ":"), collapse = ";")
-            NUM_CLASS_TEST <- paste(paste(names(NUM_CLASS_TEST), NUM_CLASS_TEST, sep = ":"), collapse = ";")
-            
-          }else{
-            
-            TEST_INDEX <- which(AllSample_SUB$Dataset %in% combinations_sub$TEST)
-            prediction <- classifyMATRIX(MTX_sub, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, testIND = TEST_INDEX, method = METHOD_CLASSIFIER)
-            TYPE = "EXTERNAL_VALIDATION"
-            
-            TRAIN_SAMP <- paste(rownames(AllSample_SUB[setdiff(1:nrow(AllSample_SUB),TEST_INDEX),]), collapse = ";")
-            TEST_SAMP <- paste(rownames(AllSample_SUB[TEST_INDEX,]), collapse = ";")
-            NUM_CLASS_TRAIN <- table(AllSample_SUB[setdiff(1:nrow(AllSample_SUB),TEST_INDEX),]$Class)
-            NUM_CLASS_TEST <- table(AllSample_SUB[TEST_INDEX,]$Class)
-            
-            NUM_CLASS_TRAIN <- paste(paste(names(NUM_CLASS_TRAIN), NUM_CLASS_TRAIN, sep = ":"), collapse = ";")
-            NUM_CLASS_TEST <- paste(paste(names(NUM_CLASS_TEST), NUM_CLASS_TEST, sep = ":"), collapse = ";")
-            
-          }
-          
-          AUC_gbm <- getAUC(prediction, label0 = CLASS)
-          
-          if(length(combinations_sub$TEST)>1){
-            nameTEST <- paste(combinations_sub$TEST, sep = "_")
-          }else{
-            nameTEST <- combinations_sub$TEST
-          }
-          
-          if(length(combinations_sub$TRAIN)>1){
-            nameTRAIN <- paste(combinations_sub$TRAIN, sep = "_")
-          }else{
-            nameTRAIN <- combinations_sub$TRAIN
-          }
-          
-          resAUCs <- data.frame(TRAIN = nameTRAIN, TEST = nameTEST, gbm = AUC_gbm, TYPE = TYPE, METHOD_CLASSIFIER = METHOD_CLASSIFIER, MODEL = MODEL)
-          
-          resAUCs <- cbind(resAUCs, TRAIN_SAMP, TEST_SAMP, NUM_CLASS_TRAIN, NUM_CLASS_TEST, FILTER_BIOGEM_TF)
-          
-          list(prediction, resAUCs)
-        }, mc.cores = 1)
-        
-        
-        save(resAUCs,MTX, AllSample,combinations, file = file_name)
-        
-        
-      }
+      TEST_INDEX <- which(AllSample_SUB$Dataset %in% combinations_sub$TEST)
+      prediction <- classifyMATRIX(MTX_sub, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, testIND = TEST_INDEX, method = METHOD_CLASSIFIER)
+      TYPE = "EXTERNAL_VALIDATION"
+      
+      TRAIN_SAMP <- paste(rownames(AllSample_SUB[setdiff(1:nrow(AllSample_SUB),TEST_INDEX),]), collapse = ";")
+      TEST_SAMP <- paste(rownames(AllSample_SUB[TEST_INDEX,]), collapse = ";")
+      NUM_CLASS_TRAIN <- table(AllSample_SUB[setdiff(1:nrow(AllSample_SUB),TEST_INDEX),]$Class)
+      NUM_CLASS_TEST <- table(AllSample_SUB[TEST_INDEX,]$Class)
+      
+      NUM_CLASS_TRAIN <- paste(paste(names(NUM_CLASS_TRAIN), NUM_CLASS_TRAIN, sep = ":"), collapse = ";")
+      NUM_CLASS_TEST <- paste(paste(names(NUM_CLASS_TEST), NUM_CLASS_TEST, sep = ":"), collapse = ";")
       
     }
+    
+    AUC_gbm <- getAUC(prediction, label0 = CLASS)
+    
+    if(length(combinations_sub$TEST)>1){
+      nameTEST <- paste(combinations_sub$TEST, sep = "_")
+    }else{
+      nameTEST <- combinations_sub$TEST
+    }
+    
+    if(length(combinations_sub$TRAIN)>1){
+      nameTRAIN <- paste(combinations_sub$TRAIN, sep = "_")
+    }else{
+      nameTRAIN <- combinations_sub$TRAIN
+    }
+    
+    resAUCs <- data.frame(TRAIN = nameTRAIN, TEST = nameTEST, gbm = AUC_gbm, TYPE = TYPE, METHOD_CLASSIFIER = METHOD_CLASSIFIER, MODEL = MODEL)
+    
+    resAUCs <- cbind(resAUCs, TRAIN_SAMP, TEST_SAMP, NUM_CLASS_TRAIN, NUM_CLASS_TEST, FILTER_BIOGEM_TF)
+    
+    list(prediction, resAUCs)
+  }, mc.cores = 1)
+  
+  
+  save(resAUCs,MTX, AllSample,combinations, file = file_name)
+        
+        
     
 
 

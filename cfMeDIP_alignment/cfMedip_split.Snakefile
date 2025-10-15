@@ -1,7 +1,3 @@
-configfile: "/home2/adefalco/LiquidBiopsy_Data/cfMedip/pipeline/config_Mel.yaml"
-
-script_folder = "/home/tufano/projects/cfMeDIP/pipelines/MedipPipeline_Antonio"
-
 my_basedir = workflow.current_basedir
 
 # --- functions to create lists of snakemake target files ---
@@ -66,13 +62,6 @@ def get_multiqc(wildcards):
 			ls.append("%s/multiqc/%s/%s/fastqc_samtools_flagstat.html" % (config["OUTDIR"],exp,samptype))
 	return ls
 
-def get_MEDIPobj(wildcards):
-	ls = []
-	for exp in config["EXP"]:
-		for samptype in config["SAMPTYPE"][exp]:
-			ls.append("%s/MEDIPS_%s/%s/medip.%s.rds" % (config["OUTDIR"],config["WS"],exp,samptype))
-	return ls
-
 def getNumSampleExp(exper):
 	sizeExp = 0
 	for samptype in config["SAMPTYPE"][exper]:
@@ -114,11 +103,6 @@ def get_class(wildcards):
 				ls.append("%s/MEDIPS_%s/%s/results/sampleprob_table_%s_%s_%s_%s.txt" % (config["OUTDIR"],config["WS"],exp,lab_tumor,lab_control,config["METHOD"], i))	
 	return ls
 
-def get_ROC(wildcards):
-	ls = []
-	for exp in config["EXP"]:
-		ls.append("%s/MEDIPS_%s/%s/results/ROC.png" % (config["OUTDIR"],config["WS"],exp,))	
-	return ls
 
 # --- snakemake rules ---
 
@@ -129,7 +113,6 @@ rule workflow:
 	input:
 		get_sortedBAM
 		#get_multiqc
-		#get_ROC
 		
 
 rule fastqc_initial:
