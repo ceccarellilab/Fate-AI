@@ -10,16 +10,16 @@
 
 #### DMRs analysis from TCGA ####
 
-saveDMRs_fromTCGA <- function(INITIAL_PATH = "./", CancerTypes = c("TCGA-BRCA", "TCGA-LUAD","TCGA-LUSC","TCGA-PRAD", "TCGA-BLCA", "TCGA-SKCM", "TCGA-MESO"), NUM_THREADS = 1, TCGA_DIR = "data/tcga/"){
+saveDMRs_fromTCGA <- function(PATH_INITIAL = "./", CancerTypes = c("TCGA-BRCA", "TCGA-LUAD","TCGA-LUSC","TCGA-PRAD", "TCGA-BLCA", "TCGA-SKCM", "TCGA-MESO"), NUM_THREADS = 1, TCGA_DIR = "data/tcga/"){
 
   library(parallel)
 
   parallel::mclapply(CancerTypes, function(TCGA_CLASS){
   
-    WORK_DIR <- paste0(INITIAL_PATH, TCGA_DIR, TCGA_CLASS)
+    WORK_DIR <- paste0(PATH_INITIAL, TCGA_DIR, TCGA_CLASS)
     
     METH_PATH <- paste0(WORK_DIR, "/", TCGA_CLASS, "_METH.RData")
-    DMR_PATH <- paste0(INITIAL_PATH, TCGA_DIR, "/", TCGA_CLASS, "_METH_data_DMR.RData")
+    DMR_PATH <- paste0(PATH_INITIAL, TCGA_DIR, "/", TCGA_CLASS, "_METH_data_DMR.RData")
     
     if (!dir.exists(WORK_DIR)) {
       dir.create(WORK_DIR)
@@ -80,7 +80,7 @@ saveDMRs_fromTCGA <- function(INITIAL_PATH = "./", CancerTypes = c("TCGA-BRCA", 
 
 ######## Select top hypermethylated from TCGA and MethAtlas ########
 
-saveBED_TopDMRs <- function(INITIAL_PATH = "./", ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"), N_TOP = 3000, sizeBIN = 300, TCGA_DIR = "data/tcga/", BED_DIR = "data/bed_dmrs/"){
+saveBED_TopDMRs <- function(PATH_INITIAL = "./", ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"), N_TOP = 3000, sizeBIN = 300, TCGA_DIR = "data/tcga/", BED_DIR = "data/bed_dmrs/"){
 
   #Forward = Plus = (+) = Positive = Watson
   #Reverse = Minus = (-) = Negative = Crick
@@ -113,7 +113,7 @@ saveBED_TopDMRs <- function(INITIAL_PATH = "./", ClassTypes = c("Colon", "Lung_L
       }
       
       tcga_code <- CLASS_TO_TCGA[[CLASS]]
-      file_path <- paste0(INITIAL_PATH, TCGA_DIR, tcga_code, "_METH_data_DMR.RData")
+      file_path <- paste0(PATH_INITIAL, TCGA_DIR, tcga_code, "_METH_data_DMR.RData")
       
       # Caricamento file
       load(file_path)
@@ -150,12 +150,12 @@ saveBED_TopDMRs <- function(INITIAL_PATH = "./", ClassTypes = c("Colon", "Lung_L
   data_DMR$Hyper_TUMOR_SHARED <- Hyper_TUMOR_SHARED
   ALTs <- names(data_DMR)
   
-  annotation <- read.table(paste0(INITIAL_PATH,"data/HM450.hg38.manifest.tsv.gz"), header = TRUE, sep = "\t")
+  annotation <- read.table(paste0(PATH_INITIAL,"data/HM450.hg38.manifest.tsv.gz"), header = TRUE, sep = "\t")
   
   resFEATUREs_alt <- lapply(ALTs, function(ALT){
     
-    PATH_WATSON <- paste0(INITIAL_PATH, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")
-    PATH_CRICK <- paste0(INITIAL_PATH, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")
+    PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")
+    PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")
     
     if(!file.exists(PATH_WATSON) | !file.exists(PATH_CRICK)){
       df_BED <- annotation[annotation$probeID %in% (data_DMR[[ALT]]),1:4]
@@ -175,7 +175,7 @@ saveBED_TopDMRs <- function(INITIAL_PATH = "./", ClassTypes = c("Colon", "Lung_L
 
 ######### Extract coverage in DMRs from cfMedip bam #########
 
-saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", 
+saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", 
                                      FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa",
                                      PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools",
                                      ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"),
@@ -194,7 +194,7 @@ saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "
 
   library(GenomicRanges)
 
-  dirSave = paste0(INITIAL_PATH, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
+  dirSave = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
   
   ALL_BAM_MEDIP <- list.files(ALL_BAM_MEDIP_PATH, pattern = ".bam.bai", full.names = TRUE)
   ALL_BAM_MEDIP <- gsub(".bam.bai", ".bam", ALL_BAM_MEDIP)
@@ -226,9 +226,9 @@ saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "
         
         resFEATUREs_alt <- lapply(ALTs, function(ALT){
           
-          watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", "-M -L ", INITIAL_PATH, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(INITIAL_PATH,awk_file_filter))
+          watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", "-M -L ", PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(PATH_INITIAL,awk_file_filter))
           
-          crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", "-M -L ", INITIAL_PATH, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(INITIAL_PATH,awk_file_filter))
+          crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", "-M -L ", PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(PATH_INITIAL,awk_file_filter))
           
           #### WATSON
           
@@ -264,7 +264,7 @@ saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "
           
           watsonFRAG_GR <- GenomicRanges::makeGRangesFromDataFrame(watsonFRAG, seqnames.field = "V2", start.field = "V3", end.field = "V4")
           
-          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(INITIAL_PATH, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
+          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
           bed_GR <- reduce(resize(bed_GR, width(bed_GR), "start"))
           
           counts_watson <- table(findOverlaps(watsonFRAG_GR, bed_GR)@to)
@@ -272,7 +272,7 @@ saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "
           
           crickFRAG_GR <- GenomicRanges::makeGRangesFromDataFrame(crickFRAG, seqnames.field = "V2", start.field = "V3", end.field = "V4")
           
-          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(INITIAL_PATH, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
+          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
           bed_GR <- reduce(resize(bed_GR, width(bed_GR), "start"))
           
           counts_crick <- table(findOverlaps(crickFRAG_GR, bed_GR)@to)
@@ -299,12 +299,12 @@ saveCoverageDMRs_fromBam <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "
 
 ##### Aggregate coverage of all samples (save) ####
 
-merge_Samples_cfMEDIP_Counts <- function(INITIAL_PATH = "./" , 
+merge_Samples_cfMEDIP_Counts <- function(PATH_INITIAL = "./" , 
                                          N_TOP = 3000,
                                          DMR_COUNT_DIR = "output/cfMeDIP/"){
   
-  dirLoad = paste0(INITIAL_PATH, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
-  DMR_COUNT_MERGE_PATH <-  paste0(INITIAL_PATH, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
+  dirLoad = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
+  DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
   
   Res_medip <- lapply(list.files(dirLoad), function(x) get(load(paste0(dirLoad,x))))
   
@@ -325,7 +325,7 @@ merge_Samples_cfMEDIP_Counts <- function(INITIAL_PATH = "./" ,
 
 ##### Get features cfMedip  ####
 
-getFeature_cfMeDIP <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", SUFFIX_BAM = ".sorted.bam",  ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"), 
+getFeature_cfMeDIP <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", SUFFIX_BAM = ".sorted.bam",  ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"), 
                                N_TOP = 3000,
                                DMR_COUNT_DIR = "output/cfMeDIP/"){
   
@@ -336,7 +336,7 @@ getFeature_cfMeDIP <- function(INITIAL_PATH = "./", ALL_BAM_MEDIP_PATH = "/home3
   AllSample <- gsub(SUFFIX_BAM, "", AllSample)
   AllSample <- gsub("/", "", AllSample)
   
-  DMR_COUNT_MERGE_PATH <-  paste0(INITIAL_PATH, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
+  DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
   
   load(DMR_COUNT_MERGE_PATH)
   

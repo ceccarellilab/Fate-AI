@@ -25,7 +25,6 @@ classifyMATRIX <- function(features.sl, analysis = "", classes = NULL, class1 = 
     features.sl <- features.sl[samples,]
   }
   
-  #source('/home/adefalco/ctDNAanalysis/funcClassification.R')
   summary.df <- data.frame(row.names = samples)
   summary.df$Class = classes
   
