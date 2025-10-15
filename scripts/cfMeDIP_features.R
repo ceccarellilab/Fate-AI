@@ -195,13 +195,9 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "
   library(GenomicRanges)
 
   dirSave = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
-  
-  ALL_BAM_MEDIP <- list.files(ALL_BAM_MEDIP_PATH, pattern = ".bam.bai", full.names = TRUE)
-  ALL_BAM_MEDIP <- gsub(".bam.bai", ".bam", ALL_BAM_MEDIP)
-  AllSample <- ALL_BAM_MEDIP
-  AllSample <- gsub(ALL_BAM_MEDIP_PATH, "", AllSample)
-  AllSample <- gsub(SUFFIX_BAM, "", AllSample)
-  AllSample <- gsub("/", "", AllSample)
+
+  ALL_BAM_MEDIP <- getPathBam(MEDIP = T)
+  AllSample <- getSamples(MEDIP = T)
   
   ALTs <- paste0("Hyper_", ClassTypes)
   
@@ -325,16 +321,9 @@ merge_Samples_cfMEDIP_Counts <- function(PATH_INITIAL = "./" ,
 
 ##### Get features cfMedip  ####
 
-getFeature_cfMeDIP <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", SUFFIX_BAM = ".sorted.bam",  ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"), 
+getFeature_cfMeDIP <- function(AllSample, PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", SUFFIX_BAM = ".sorted.bam",  ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"), 
                                N_TOP = 3000,
                                DMR_COUNT_DIR = "output/cfMeDIP/"){
-  
-  ALL_BAM_MEDIP <- list.files(ALL_BAM_MEDIP_PATH, pattern = ".bam.bai", full.names = TRUE)
-  ALL_BAM_MEDIP <- gsub(".bam.bai", ".bam", ALL_BAM_MEDIP)
-  AllSample <- ALL_BAM_MEDIP
-  AllSample <- gsub(ALL_BAM_MEDIP_PATH, "", AllSample)
-  AllSample <- gsub(SUFFIX_BAM, "", AllSample)
-  AllSample <- gsub("/", "", AllSample)
   
   DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
   
@@ -365,6 +354,6 @@ getFeature_cfMeDIP <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3
   
   feat_medip <- cbind(score_classes, ratioCoverage)
 
-  feat_medip
+  feat_medip[AllSample,]
   
 }

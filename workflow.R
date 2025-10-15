@@ -1,15 +1,7 @@
 ##### WORKFLOW cfMEDIP#####
 
-FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
-PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
-NUM_THREADS <- 10
 PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
-ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/FIGURE/FIGURES_paper/test_script/TEST_BAM_MEDIP"
-SUFFIX_BAM = ".sorted.bam"
-
-
 lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
-
 
 saveDMRs_fromTCGA(PATH_INITIAL = PATH_INITIAL, CancerTypes = as.character(CLASS_TO_TCGA), NUM_THREADS = NUM_THREADS)
 
@@ -31,13 +23,8 @@ feat_cfmedip <- getFeature_cfMeDIP(PATH_INITIAL = PATH_INITIAL, ALL_BAM_MEDIP_PA
 
 
 ##### WORKFLOW WGS #####
-FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
-PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
-NUM_THREADS <- 10
-PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
-ALL_BAM_WGS_DIR = "/home2/adefalco/Fate-AI/WGS_alignment/output_folder/BAM/"
-SUFFIX_BAM = "_recal.bam"
 
+PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
 
 
@@ -47,16 +34,9 @@ lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), fu
 #                        filters=c("NCIT:C3224"))
 # pgxFreqplot(frequency)
 
-ALL_BAM_WGS <- list.files(ALL_BAM_WGS_DIR, pattern = ".bam.bai", full.names = TRUE)
-ALL_BAM_WGS <- gsub(".bam.bai", ".bam", ALL_BAM_WGS)
-AllSample <- ALL_BAM_WGS
-AllSample <- gsub(ALL_BAM_WGS_DIR, "", AllSample)
-AllSample <- gsub(SUFFIX_BAM, "", AllSample)
-AllSample <- gsub("/", "", AllSample)
+AllSample_df <- data.frame(sample = getSamples(), pathBAM = getPathBam(), row.names = getSamples())
 
-AllSample_df <- data.frame(sample = AllSample, pathBAM = ALL_BAM_WGS, row.names = AllSample)
-
-EXAMPLE_SAMPLE <- "LB-CRC-32-P-02"
+EXAMPLE_SAMPLE <- AllSample_df$sample[1]
 SAMPLE <- AllSample_df[EXAMPLE_SAMPLE,]$sample
 BAM <- AllSample_df[EXAMPLE_SAMPLE,]$pathBAM
 saveFragmBIN_fromBam(PATH_INITIAL = PATH_INITIAL, sample = SAMPLE, bam = BAM, NUM_THREADS = NUM_THREADS, PATH_SAMTOOLS = PATH_SAMTOOLS, FASTA_FILE = FASTA_FILE, SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM))

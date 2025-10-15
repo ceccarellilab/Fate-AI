@@ -24,3 +24,39 @@ CLASS_PARAMS_WGS <- list(
   MM             = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv")),
   Pancreatic     = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv"))
 )
+
+FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
+PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
+NUM_THREADS <- 10
+PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
+ALL_BAM_MEDIP_DIR = "/home3/adefalco/Fate-AI/FIGURE/FIGURES_paper/test_script/TEST_BAM_MEDIP"
+SUFFIX_BAM_MEDIP <- ".sorted.bam"
+
+
+ALL_BAM_WGS_DIR = "/home2/adefalco/Fate-AI/WGS_alignment/output_folder/BAM"
+SUFFIX_BAM_WGS = "_recal.bam"
+
+getPathBam <- function(MEDIP = FALSE){
+  ifelse(MEDIP, ALL_BAM_DIR <- ALL_BAM_MEDIP_DIR, ALL_BAM_DIR <- ALL_BAM_WGS_DIR)
+  
+  ALL_BAM_PATH <- list.files(ALL_BAM_DIR, pattern = ".bam.bai", full.names = TRUE)
+  ALL_BAM_PATH <- gsub(".bam.bai", ".bam", ALL_BAM_PATH)
+  ALL_BAM_PATH
+}
+
+getSamples <- function(MEDIP = FALSE){
+  AllSample <- getPathBam(MEDIP)
+  
+  ifelse(MEDIP, ALL_BAM_DIR <- ALL_BAM_MEDIP_DIR, ALL_BAM_DIR <- ALL_BAM_WGS_DIR)
+  ifelse(MEDIP, SUFFIX_BAM <- SUFFIX_BAM_MEDIP, SUFFIX_BAM <- SUFFIX_BAM_WGS)
+  
+  AllSample <- gsub(ALL_BAM_DIR, "", AllSample)
+  AllSample <- gsub(SUFFIX_BAM, "", AllSample)
+  AllSample <- gsub("/", "", AllSample)
+  AllSample
+}
+
+
+
+
+
