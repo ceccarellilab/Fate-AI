@@ -1,0 +1,9 @@
+executor: slurm
+default-resources:
+  - slurm_walltime=60*12
+  - slurm_partition=biopartition
+  - time="24:00:00"
+  - threads=1
+  - mem_mb=1024000
+  - c=1
+  - tasks=1

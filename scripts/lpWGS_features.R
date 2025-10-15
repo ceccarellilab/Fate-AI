@@ -178,7 +178,7 @@ saveFragmBIN_fromBam <- function(PATH_INITIAL = "./",
 
 ##### Compute metrics in 3Mb region ####
 
-getDirMetrics <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_DIR/"){
+getDirMetrics <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/"){
   dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
   if (!dir.exists(dirSave)) {
     dir.create(dirSave)
@@ -186,9 +186,9 @@ getDirMetrics <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", METRI
   dirSave
 }
 
-getPathMetrics <- function(PATH_INITIAL = "./", sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_DIR/",  BIN_SIZE = 3000000){
+getPathMetrics <- function(PATH_INITIAL = "./", sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/",  BIN_SIZE = 3000000, MOTIF = FALSE){
   dirSave <- getDirMetrics(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
-  path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
+  ifelse(MOTIF, path_output <- paste0(dirSave,sample, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"), path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
   path_output
 }
 
@@ -199,17 +199,17 @@ saveMetricsBIN <- function(PATH_INITIAL = "./",
                            GC_CORR = TRUE,
                            OUTPUT_DIR = "output/WGS/",
                            FRAGM_DIR = "FRAGM_BIN/",
-                           METRICS_DIR = "METRICS_DIR/"){
+                           METRICS_DIR = "METRICS_BIN/"){
 
 #dirRead <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
 #dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
 
-if (!dir.exists(dirSave)) {
-  dir.create(dirSave)
-}
-  
-dir.create(dirSave)
-setwd(dirSave)
+# if (!dir.exists(dirSave)) {
+#   dir.create(dirSave)
+# }
+#   
+# dir.create(dirSave)
+# setwd(dirSave)
 
 MIN_NUCLEOSOME_CORE <- 140
 MIN_CHROMATOSOME <- 160
@@ -276,7 +276,9 @@ for(i in 1:length(resFEATUREs)){
   
 }
 
-save(df, file = paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+save(df, file = path_output)
+
+path_output <- getPathMetrics(PATH_INITIAL,sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE, MOTIF = TRUE)
 
 df <- data.frame(row.names = names(resFEATUREs))
 
@@ -331,7 +333,7 @@ for(i in 1:length(resFEATUREs)){
   df$TTTT[i] = resDff[resDff$Motif=="TTTT",]$Density
 }
 
-save(df, file = paste0(dirSave,sample, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+save(df, file = path_output)
 
 }
 

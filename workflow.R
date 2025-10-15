@@ -76,7 +76,7 @@ BAM <- AllSample_df[EXAMPLE_SAMPLE,]$pathBAM
 saveFragmBIN_fromBam(PATH_INITIAL = INITIAL_PATH, sample = SAMPLE, bam = BAM, NUM_THREADS = NUM_THREADS, PATH_SAMTOOLS = PATH_SAMTOOLS, FASTA_FILE = FASTA_FILE, SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM))
 
 saveMetricsBIN(PATH_INITIAL = INITIAL_PATH, 
-               sample = sample,
+               sample = SAMPLE,
                NUM_THREADS = NUM_THREADS)
 
 # Define mapping of class to frequency and file path
@@ -97,9 +97,9 @@ CLASS_PARAMS_WGS <- list(
   Pancreatic     = list(freq = 15,  file = paste0(INITIAL_PATH, "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv"))
 )
 
-feat_WGS <- getFeatureBasedOnCNV(AllSample, 
-                     names(CLASS_PARAMS_WGS)[1], 
-                     NUM_THREADS = 30)
+feat_WGS <- getFeatureBasedOnCNV(c(AllSample, AllSample), PATH_INITIAL = PATH_INITIAL, 
+                                 CLASS_CNV = names(CLASS_PARAMS_WGS)[1], 
+                                 NUM_THREADS = 30)
 
 
 #### Feature WGS and Medip for each cancer type and healthy samples (respect to specific region) (from /home3/adefalco/Fate-AI/ADAPTIVE_ANALYSIS/1_getFeat.R) FOR FIGURE 4 ####
