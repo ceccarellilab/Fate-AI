@@ -419,6 +419,21 @@ getRegionBinSample <- function(pathMetrics){
 
 #### compute local feature ####
 
+myECDFsingleValue <- function(x){
+    x <- sort(x)
+    n <- length(x)
+    if (n < 1) 
+      stop("'x' must have 1 or more non-missing values")
+    vals <- unique(x)
+    rval <- approxfun(vals, cumsum(tabulate(match(x, vals)))/n, 
+                      method = "constant", yleft = 0, yright = 1, f = 0, ties = "ordered")
+    class(rval) <- c("ecdf", "stepfun", class(rval))
+    assign("nobs", n, envir = environment(rval))
+    attr(rval, "call") <- sys.call()
+    out <- data.frame(x = knots(rval), cdf = rval(knots(rval)))
+    out
+}
+
 #features_sel = c("ent","mean", "std","cv", "ratio_NucCor_Nuc" , "ratio_Chrom_Nuc","ratio_NucCorChrom_Nuc", "ratio", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
 getMtxDiff_eCDF_Features_SINGLE_SAMP <- function(CNV_regions, pathMetrics, features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"), ECDF = TRUE, MIN_SIZE_ALT = 1500000){
   
@@ -503,6 +518,8 @@ getMtxDiff_eCDF_Features_SINGLE_SAMP <- function(CNV_regions, pathMetrics, featu
 
 getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, FREQ_MANUAL_LOSS = NULL){
   
+  library(GenomicRanges)
+  
   if (!CLASS %in% names(CLASS_PARAMS_WGS)) {
     stop("Unknown CLASS: ", CLASS)
   }
@@ -530,10 +547,11 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
   LOSS$ALT <- "LOSS"
   
   CNV_FREQ <- rbind(GAIN, LOSS)
-  
+  #CNV_FREQ$no <- NULL
+
   CNV_GR <- GenomicRanges::makeGRangesFromDataFrame(CNV_FREQ, seqnames.field = "reference_name", start.field = "start", end.field = "end", keep.extra.columns = TRUE)
 
-  CNV_GR <- unlist(GenomicRanges::reduce(split(CNV_GR, ~ALT)))
+  CNV_GR <- unlist(GenomicRanges::reduce(GenomicRanges::split(CNV_GR, ~ALT)))
   CNV_GR$ALT <- names(CNV_GR)
   CNV_GR <- CNV_GR[CNV_GR@seqnames %in% 1:22,]
   
@@ -541,6 +559,18 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
 }
 
 #### Extract WGS features based on CNV regions from Progenetix ####
+
+NUM_THREADS = 1
+FREQ = NULL
+MIN_SIZE_ALT = 1500000
+features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
+SIZE_BP_AGGR = 5
+AGGREGATE_SAMPLES = FALSE
+AGGREGATE_BIN = TRUE
+MIN_FRAG_SIZE = 50
+MAX_FRAG_SIZE =  250
+BIN_SIZE = 3000000
+AMPs = c("GAIN",  "LOSS")
 
 getFeatureBasedOnCNV <- function(AllSample, 
           PATH_INITIAL,
@@ -566,10 +596,9 @@ getFeatureBasedOnCNV <- function(AllSample,
   res_Density <- parallel::mclapply(AllSample, function(sample){
     
 
-    print(sample$FASTQ_Name)
+    #print(sample$FASTQ_Name)
     
-    getpat
-    
+ 
     pathFragm <- getPathFragm(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
     load(pathFragm)
     
@@ -647,7 +676,7 @@ getFeatureBasedOnCNV <- function(AllSample,
     mergeDF$Sd <- sd(P-Q)
     rm(P,Q)
 
-    final <- data.frame(Sum = mergeDF$Sum[1], Sd = mergeDF$Sd[1] ,KL_divergence = (mergeDF$KL_divergence[1]), row.names = sample$FASTQ_Name)
+    final <- data.frame(Sum = mergeDF$Sum[1], Sd = mergeDF$Sd[1] ,KL_divergence = (mergeDF$KL_divergence[1]), row.names = sample)
     rm(mergeDF)
     final
     
@@ -656,7 +685,7 @@ getFeatureBasedOnCNV <- function(AllSample,
   rm(res_Density)
   
   #Local Features
-  resECDF_ALL <- parallel::mclapply(1:nrow(AllSample), function(sample){
+  resECDF_ALL <- parallel::mclapply(AllSample, function(sample){
     
     pathMetrics <- getPathMetrics(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
     MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = pathMetrics, features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
