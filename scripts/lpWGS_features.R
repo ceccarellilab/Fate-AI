@@ -560,18 +560,6 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
 
 #### Extract WGS features based on CNV regions from Progenetix ####
 
-NUM_THREADS = 1
-FREQ = NULL
-MIN_SIZE_ALT = 1500000
-features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc")
-SIZE_BP_AGGR = 5
-AGGREGATE_SAMPLES = FALSE
-AGGREGATE_BIN = TRUE
-MIN_FRAG_SIZE = 50
-MAX_FRAG_SIZE =  250
-BIN_SIZE = 3000000
-AMPs = c("GAIN",  "LOSS")
-
 getFeatureBasedOnCNV <- function(AllSample, 
           PATH_INITIAL,
           CLASS_CNV, 

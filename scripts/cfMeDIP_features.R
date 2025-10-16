@@ -117,11 +117,13 @@ saveBED_TopDMRs <- function(PATH_INITIAL = "./", ClassTypes = c("Colon", "Lung_L
         top_Plasma
       }else{
         
-        if (!CLASS %in% names(CLASS_TO_TCGA)) {
-          stop(paste("Unknown CLASS:", CLASS))
+        CLASS_c <- gsub("Hyper_", "", CLASS)
+        
+        if (!CLASS_c %in% names(CLASS_TO_TCGA)) {
+          stop(paste("Unknown CLASS_c:", CLASS_c))
         }
         
-        tcga_code <- CLASS_TO_TCGA[[CLASS]]
+        tcga_code <- CLASS_TO_TCGA[[CLASS_c]]
         file_path <- paste0(PATH_INITIAL, TCGA_DIR, tcga_code, "_METH_data_DMR.RData")
         
         # Caricamento file
@@ -190,13 +192,10 @@ saveBED_TopDMRs <- function(PATH_INITIAL = "./", ClassTypes = c("Colon", "Lung_L
 saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", 
                                      sample, 
                                      bam,
-                                     #ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", 
                                      FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa",
                                      PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools",
                                      ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"),
-                                     #SUFFIX_BAM = ".sorted.bam", 
                                      N_TOP = 3000, 
-                                     #NUM_THREADS = 10,   
                                      BIN_SIZE = 300,
                                      MAPQ = 30,
                                      MAX_FRAG_LENGHT = 550,
@@ -212,17 +211,9 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./",
   dir.create(paste0(PATH_INITIAL, DMR_COUNT_DIR))
   
   dirSave = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
-
-  #ALL_BAM_MEDIP <- getPathBam(MEDIP = T)
-  #AllSample <- getSamples(MEDIP = T)
   
   ALTs <- paste0("Hyper_", ClassTypes)
   
-  #COUNTS_samples <- parallel::mclapply(1:length(AllSample), function(i){
-    
-    #sample <- AllSample[i]
-    #bam <- ALL_BAM_MEDIP[i]
-      
       path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
       
       if(!file.exists(path_output)){
@@ -231,11 +222,6 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./",
         
         library(parallel)
         library(dplyr)
-        
-        #setwd("../")
-        
-        #setwd("../")
-        #print(getwd())
         
         resFEATUREs_alt <- lapply(ALTs, function(ALT){
           
@@ -299,17 +285,13 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./",
         
         resFEATUREs_alt <- Reduce(rbind, resFEATUREs_alt)
         
-        #resFEATUREs_alt <- subset(resFEATUREs_alt, resFEATUREs_alt[,1] >= FILTER_COUNT)
-        
         save(resFEATUREs_alt, file = path_output)
       }else{
         load(path_output)
       }
     
     resFEATUREs_alt
-    
-  #}, mc.cores = NUM_THREADS) 
-
+  
 }
 
 ##### Aggregate coverage of all samples (save) ####
@@ -335,21 +317,27 @@ merge_Samples_cfMEDIP_Counts <- function(PATH_INITIAL = "./" ,
   rownames(COUNTS_samples_merge) <- COUNTS_samples_merge$ID
   COUNTS_samples_merge$ID <- NULL
   
-  save(COUNTS_samples_merge, file = DMR_COUNT_MERGE_PATH)
+  #save(COUNTS_samples_merge, file = DMR_COUNT_MERGE_PATH)
+  COUNTS_samples_merge
 }
 
 ##### Get features cfMedip  ####
 
-getFeature_cfMeDIP <- function(AllSample, PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", SUFFIX_BAM = ".sorted.bam",  ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"), 
+getFeature_cfMeDIP <- function(PATH_INITIAL = "./", 
+                               AllSample, 
+                               CLASS, 
                                N_TOP = 3000,
                                DMR_COUNT_DIR = "output/cfMeDIP/",
                                FILTER_COUNT = 3){
   
-  DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
   
-  if(!file.exists(DMR_COUNT_MERGE_PATH)) merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP = N_TOP, DMR_COUNT_DIR = DMR_COUNT_DIR)
+  ClassTypes = c("Plasma", CLASS)
   
-  load(DMR_COUNT_MERGE_PATH)
+  #DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
+  #if(!file.exists(DMR_COUNT_MERGE_PATH)) merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP = N_TOP, DMR_COUNT_DIR = DMR_COUNT_DIR)
+  #load(DMR_COUNT_MERGE_PATH)
+  
+  COUNTS_samples_merge <- merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP = N_TOP, DMR_COUNT_DIR = DMR_COUNT_DIR)
   
   COUNTS_samples_merge[COUNTS_samples_merge<FILTER_COUNT] <- 0
   

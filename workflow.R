@@ -3,23 +3,37 @@
 PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
 
+#Get DMRs from TCGA and Methylation Atlas Deconvolution
 saveDMRs_fromTCGA(PATH_INITIAL = PATH_INITIAL, CancerTypes = as.character(CLASS_TO_TCGA), NUM_THREADS = NUM_THREADS)
 
-saveBED_TopDMRs(PATH_INITIAL = PATH_INITIAL, ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"))
+#Generate BED files of DMRs
+saveBED_TopDMRs(PATH_INITIAL = PATH_INITIAL, ClassTypes = c("Plasma", names(CLASS_TO_TCGA)))
 
 AllSample_df <- data.frame(sample = getSamples(MEDIP = T), pathBAM = getPathBam(MEDIP = T), row.names = getSamples(MEDIP = T))
 
+(load("~/home3/Fate-AI/FIGURE/FIGURES_paper/data/AllSample_ALL_with_coverage_MEDIP.RData"))
+AllSample_ALL <- AllSample_ALL["IPH20",]
+
+AllSample_df <- data.frame(sample = AllSample_ALL$IC_code, pathBAM_WGS = AllSample_ALL$PATH_BAM_WGS, pathBAM_MEDIP = AllSample_ALL$PATH_BAM_MEDIP, Class = AllSample_ALL$Class, row.names = AllSample_ALL$IC_code)
+
+
 lapply(1:nrow(AllSample_df), function(i){
+  
+  #Get coverage on DMRs for each sample
   saveCoverageDMRs_fromBam(PATH_INITIAL = PATH_INITIAL, 
                            sample = AllSample_df$sample[i],
-                           bam = AllSample_df$pathBAM[i],
+                           bam = AllSample_df$pathBAM_MEDIP[i],
                            FASTA_FILE = FASTA_FILE,
                            PATH_SAMTOOLS = PATH_SAMTOOLS,
+                           #AllSample_df$Class)
                            ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
 })
 
-feat_cfmedip <- getFeature_cfMeDIP(PATH_INITIAL = PATH_INITIAL, ALL_BAM_MEDIP_PATH = ALL_BAM_MEDIP_PATH, SUFFIX_BAM = SUFFIX_BAM,
-                                   ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"))
+#Get features (cfMeDIP)
+feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$sample,
+                                   PATH_INITIAL = PATH_INITIAL,
+                                   #CLASS = AllSample_df$Class)
+                                   CLASS = c("Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"))
 
 
 ##### WORKFLOW WGS #####
@@ -27,29 +41,27 @@ feat_cfmedip <- getFeature_cfMeDIP(PATH_INITIAL = PATH_INITIAL, ALL_BAM_MEDIP_PA
 PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
 
-
-# remotes::install_github("progenetix/pgxRpi")
-# library("pgxRpi")
-# frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
-#                        filters=c("NCIT:C3224"))
-# pgxFreqplot(frequency)
-
 AllSample_df <- data.frame(sample = getSamples(), pathBAM = getPathBam(), row.names = getSamples())
 
-EXAMPLE_SAMPLE <- AllSample_df$sample[1]
-SAMPLE <- AllSample_df[EXAMPLE_SAMPLE,]$sample
-BAM <- AllSample_df[EXAMPLE_SAMPLE,]$pathBAM
-saveFragmBIN_fromBam(PATH_INITIAL = PATH_INITIAL, sample = SAMPLE, bam = BAM, NUM_THREADS = NUM_THREADS, PATH_SAMTOOLS = PATH_SAMTOOLS, FASTA_FILE = FASTA_FILE, SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM))
+lapply(1:nrow(AllSample_df), function(i){
 
+saveFragmBIN_fromBam(PATH_INITIAL = PATH_INITIAL, 
+                     sample = AllSample_df$sample[i], 
+                     bam = AllSample_df$pathBAM[i], 
+                     NUM_THREADS = NUM_THREADS, 
+                     PATH_SAMTOOLS = PATH_SAMTOOLS, 
+                     FASTA_FILE = FASTA_FILE, 
+                     SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS))
+  
 saveMetricsBIN(PATH_INITIAL = PATH_INITIAL, 
-               sample = SAMPLE,
-               NUM_THREADS = NUM_THREADS)
+                 sample = AllSample_df$sample[i],
+                 NUM_THREADS = NUM_THREADS)
 
+})
 
-
-feat_WGS <- getFeatureBasedOnCNV(AllSample, PATH_INITIAL = PATH_INITIAL, 
+feat_WGS <- getFeatureBasedOnCNV(AllSample_df$sample, PATH_INITIAL = PATH_INITIAL, 
                                  CLASS_CNV = names(CLASS_PARAMS_WGS)[1], 
-                                 NUM_THREADS = 30)
+                                 NUM_THREADS = NUM_THREADS)
 
 
 #### Feature WGS and Medip ####
@@ -73,7 +85,7 @@ if(MODEL == "Fate-AI"){
   feat_WGS <- getFeatureBasedOnCNV(AllSample, PATH_INITIAL = PATH_INITIAL, 
                                    CLASS_CNV = CLASS, 
                                    NUM_THREADS = NUM_THREADS)
-  medip_mtx <- getFeatMEDIP_last_COUNT(AllSample)
+  medip_mtx <- getFeatMEDIP_last_COUNT(AllSample, )
   feat_mtx <- cbind(feat_mtx, medip_mtx)
 
 }
