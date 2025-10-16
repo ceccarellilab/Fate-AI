@@ -7,16 +7,16 @@ saveDMRs_fromTCGA(PATH_INITIAL = PATH_INITIAL, CancerTypes = as.character(CLASS_
 
 saveBED_TopDMRs(PATH_INITIAL = PATH_INITIAL, ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"))
 
-saveCoverageDMRs_fromBam(PATH_INITIAL = PATH_INITIAL, 
-                         ALL_BAM_MEDIP_PATH = ALL_BAM_MEDIP_PATH, 
-                         FASTA_FILE = FASTA_FILE,
-                         PATH_SAMTOOLS = PATH_SAMTOOLS,
-                         ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"),
-                         SUFFIX_BAM = SUFFIX_BAM, 
-                         NUM_THREADS = NUM_THREADS)
+AllSample_df <- data.frame(sample = getSamples(MEDIP = T), pathBAM = getPathBam(MEDIP = T), row.names = getSamples(MEDIP = T))
 
-
-merge_Samples_cfMEDIP_Counts(PATH_INITIAL = PATH_INITIAL)
+lapply(1:nrow(AllSample_df), function(i){
+  saveCoverageDMRs_fromBam(PATH_INITIAL = PATH_INITIAL, 
+                           sample = AllSample_df$sample[i],
+                           bam = AllSample_df$pathBAM[i],
+                           FASTA_FILE = FASTA_FILE,
+                           PATH_SAMTOOLS = PATH_SAMTOOLS,
+                           ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
+})
 
 feat_cfmedip <- getFeature_cfMeDIP(PATH_INITIAL = PATH_INITIAL, ALL_BAM_MEDIP_PATH = ALL_BAM_MEDIP_PATH, SUFFIX_BAM = SUFFIX_BAM,
                                    ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"))

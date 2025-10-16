@@ -85,103 +85,118 @@ saveBED_TopDMRs <- function(PATH_INITIAL = "./", ClassTypes = c("Colon", "Lung_L
   #Forward = Plus = (+) = Positive = Watson
   #Reverse = Minus = (-) = Negative = Crick
   
-  library(deconvR) 
-  
-  data("HumanCellTypeMethAtlas")
-  
-  data("IlluminaMethEpicB5ProbeIDs")
-  
   ALTs <- paste0("Hyper_", ClassTypes)
   
-  data_DMR <- lapply(ALTs, function(CLASS){
-    
-    if(CLASS == "Hyper_Plasma"){
-      Healthy_Types <- c("Vascular_endothelial_cells","Hepatocytes","Erythrocyte_progenitors","Monocytes_EPIC","Neutrophils_EPIC","B.cells_EPIC","CD4T.cells_EPIC","CD8T.cells_EPIC","NK.cells_EPIC")
-      rownames(HumanCellTypeMethAtlas) <- HumanCellTypeMethAtlas$IDs
-      HumanCellTypeMethAtlas <- HumanCellTypeMethAtlas[,-1]
-      
-      Score <- apply(HumanCellTypeMethAtlas[,colnames(HumanCellTypeMethAtlas) %in% Healthy_Types], 1, mean) - apply(HumanCellTypeMethAtlas[,!colnames(HumanCellTypeMethAtlas) %in% Healthy_Types], 1, mean)
-      
-      Score <- Score[order(Score, decreasing = TRUE)]
-      Score <- Score[Score>0]
-      top_Plasma <- names(Score)[1:min(length(Score), N_TOP)]
-      top_Plasma
-    }else{
-      
-      if (!CLASS %in% names(CLASS_TO_TCGA)) {
-        stop(paste("Unknown CLASS:", CLASS))
-      }
-      
-      tcga_code <- CLASS_TO_TCGA[[CLASS]]
-      file_path <- paste0(PATH_INITIAL, TCGA_DIR, tcga_code, "_METH_data_DMR.RData")
-      
-      # Caricamento file
-      load(file_path)
-      
-      nameHYPER <- "Hypermethylated in Primary Tumor"
-      data_DMR <- data_DMR[data_DMR$status==nameHYPER,]
-      data_DMR$FC <- log2(data_DMR$mean.Primary.Tumor/data_DMR$mean.Solid.Tissue.Normal)
-      data_DMR <- data_DMR[data_DMR$FC>1.5 & data_DMR$p.value.adj.Primary.Tumor.Solid.Tissue.Normal<0.01,]
-      data_DMR$SCORE <- -log10(data_DMR$p.value.adj.Primary.Tumor.Solid.Tissue.Normal)*data_DMR$FC
-      data_DMR <- data_DMR[order(data_DMR$SCORE, decreasing = TRUE),]
-      
-      data_DMR <- data_DMR[1:min(nrow(data_DMR), N_TOP),]
-      top_Tumor <- rownames(data_DMR)
-      top_Tumor
-    }
-    
-  })
-  
-  names(data_DMR) <-   ALTs 
-  
-  Hyper_Lung_SHARED <- intersect(data_DMR[["Hyper_Lung_LUAD"]], data_DMR[["Hyper_Lung_LUSC"]])
-  
-  tabCOUNT <- table(unlist(data_DMR[-which(names(data_DMR)=="Hyper_Plasma")]))
-  Hyper_TUMOR_SHARED <- names(tabCOUNT[tabCOUNT>2])
-  
-  Hyper_Lung_SHARED <- Hyper_Lung_SHARED[!Hyper_Lung_SHARED %in% Hyper_TUMOR_SHARED]
-  
-  data_DMR <- lapply(1:length(data_DMR), function(n) setdiff(data_DMR[[n]], unlist(data_DMR[-n])))    
-  names(data_DMR) <-   ALTs 
-  
-  lapply(data_DMR, function(x) length(x))
-  
-  data_DMR$Hyper_Lung_SHARED <- Hyper_Lung_SHARED
-  data_DMR$Hyper_TUMOR_SHARED <- Hyper_TUMOR_SHARED
-  ALTs <- names(data_DMR)
-  
-  annotation <- read.table(paste0(PATH_INITIAL,"data/HM450.hg38.manifest.tsv.gz"), header = TRUE, sep = "\t")
-  
-  resFEATUREs_alt <- lapply(ALTs, function(ALT){
-    
+  BED_DONE <- all(unlist(lapply(ALTs, function(ALT){
     PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")
     PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")
     
-    if(!file.exists(PATH_WATSON) | !file.exists(PATH_CRICK)){
-      df_BED <- annotation[annotation$probeID %in% (data_DMR[[ALT]]),1:4]
-      centerBIN <- df_BED$CpG_end-1
-      df_BED$CpG_beg <- centerBIN - sizeBIN/2
-      df_BED$CpG_end <- centerBIN + sizeBIN/2
-      ALT <- gsub(" in Primary Tumor", "",ALT )
-      
-      write.table(df_BED[df_BED$probe_strand=="+",1:3], file = PATH_WATSON, quote = FALSE, row.names = FALSE, col.names = FALSE)
-      write.table(df_BED[df_BED$probe_strand=="-",1:3], file = PATH_CRICK, quote = FALSE, row.names = FALSE, col.names = FALSE)
-    }
+    file.exists(PATH_WATSON) & file.exists(PATH_CRICK)
+  })))
   
-  })
+  if(!BED_DONE){
+    
+    library(deconvR) 
+    
+    data("HumanCellTypeMethAtlas")
+    
+    data("IlluminaMethEpicB5ProbeIDs")
+    
+    data_DMR <- lapply(ALTs, function(CLASS){
+      
+      if(CLASS == "Hyper_Plasma"){
+        Healthy_Types <- c("Vascular_endothelial_cells","Hepatocytes","Erythrocyte_progenitors","Monocytes_EPIC","Neutrophils_EPIC","B.cells_EPIC","CD4T.cells_EPIC","CD8T.cells_EPIC","NK.cells_EPIC")
+        rownames(HumanCellTypeMethAtlas) <- HumanCellTypeMethAtlas$IDs
+        HumanCellTypeMethAtlas <- HumanCellTypeMethAtlas[,-1]
+        
+        Score <- apply(HumanCellTypeMethAtlas[,colnames(HumanCellTypeMethAtlas) %in% Healthy_Types], 1, mean) - apply(HumanCellTypeMethAtlas[,!colnames(HumanCellTypeMethAtlas) %in% Healthy_Types], 1, mean)
+        
+        Score <- Score[order(Score, decreasing = TRUE)]
+        Score <- Score[Score>0]
+        top_Plasma <- names(Score)[1:min(length(Score), N_TOP)]
+        top_Plasma
+      }else{
+        
+        if (!CLASS %in% names(CLASS_TO_TCGA)) {
+          stop(paste("Unknown CLASS:", CLASS))
+        }
+        
+        tcga_code <- CLASS_TO_TCGA[[CLASS]]
+        file_path <- paste0(PATH_INITIAL, TCGA_DIR, tcga_code, "_METH_data_DMR.RData")
+        
+        # Caricamento file
+        load(file_path)
+        
+        nameHYPER <- "Hypermethylated in Primary Tumor"
+        data_DMR <- data_DMR[data_DMR$status==nameHYPER,]
+        data_DMR$FC <- log2(data_DMR$mean.Primary.Tumor/data_DMR$mean.Solid.Tissue.Normal)
+        data_DMR <- data_DMR[data_DMR$FC>1.5 & data_DMR$p.value.adj.Primary.Tumor.Solid.Tissue.Normal<0.01,]
+        data_DMR$SCORE <- -log10(data_DMR$p.value.adj.Primary.Tumor.Solid.Tissue.Normal)*data_DMR$FC
+        data_DMR <- data_DMR[order(data_DMR$SCORE, decreasing = TRUE),]
+        
+        data_DMR <- data_DMR[1:min(nrow(data_DMR), N_TOP),]
+        top_Tumor <- rownames(data_DMR)
+        top_Tumor
+      }
+      
+    })
+    
+    names(data_DMR) <-   ALTs 
+    
+    Hyper_Lung_SHARED <- intersect(data_DMR[["Hyper_Lung_LUAD"]], data_DMR[["Hyper_Lung_LUSC"]])
+    
+    tabCOUNT <- table(unlist(data_DMR[-which(names(data_DMR)=="Hyper_Plasma")]))
+    Hyper_TUMOR_SHARED <- names(tabCOUNT[tabCOUNT>2])
+    
+    Hyper_Lung_SHARED <- Hyper_Lung_SHARED[!Hyper_Lung_SHARED %in% Hyper_TUMOR_SHARED]
+    
+    data_DMR <- lapply(1:length(data_DMR), function(n) setdiff(data_DMR[[n]], unlist(data_DMR[-n])))    
+    names(data_DMR) <-   ALTs 
+    
+    lapply(data_DMR, function(x) length(x))
+    
+    data_DMR$Hyper_Lung_SHARED <- Hyper_Lung_SHARED
+    data_DMR$Hyper_TUMOR_SHARED <- Hyper_TUMOR_SHARED
+    ALTs <- names(data_DMR)
+    
+    annotation <- read.table(paste0(PATH_INITIAL,"data/HM450.hg38.manifest.tsv.gz"), header = TRUE, sep = "\t")
+    
+    resFEATUREs_alt <- lapply(ALTs, function(ALT){
+      
+      PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")
+      PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")
+      
+      if(!file.exists(PATH_WATSON) | !file.exists(PATH_CRICK)){
+        df_BED <- annotation[annotation$probeID %in% (data_DMR[[ALT]]),1:4]
+        centerBIN <- df_BED$CpG_end-1
+        df_BED$CpG_beg <- centerBIN - sizeBIN/2
+        df_BED$CpG_end <- centerBIN + sizeBIN/2
+        ALT <- gsub(" in Primary Tumor", "",ALT )
+        
+        write.table(df_BED[df_BED$probe_strand=="+",1:3], file = PATH_WATSON, quote = FALSE, row.names = FALSE, col.names = FALSE)
+        write.table(df_BED[df_BED$probe_strand=="-",1:3], file = PATH_CRICK, quote = FALSE, row.names = FALSE, col.names = FALSE)
+      }
+    
+    })
+  
+  }
+  
 
 }
 
 
 ######### Extract coverage in DMRs from cfMedip bam #########
 
-saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", 
+saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", 
+                                     sample, 
+                                     bam,
+                                     #ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", 
                                      FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa",
                                      PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools",
                                      ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"),
-                                     SUFFIX_BAM = ".sorted.bam", 
+                                     #SUFFIX_BAM = ".sorted.bam", 
                                      N_TOP = 3000, 
-                                     NUM_THREADS = 10,   
+                                     #NUM_THREADS = 10,   
                                      BIN_SIZE = 300,
                                      MAPQ = 30,
                                      MAX_FRAG_LENGHT = 550,
@@ -194,17 +209,19 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "
 
   library(GenomicRanges)
 
+  dir.create(paste0(PATH_INITIAL, DMR_COUNT_DIR))
+  
   dirSave = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
 
-  ALL_BAM_MEDIP <- getPathBam(MEDIP = T)
-  AllSample <- getSamples(MEDIP = T)
+  #ALL_BAM_MEDIP <- getPathBam(MEDIP = T)
+  #AllSample <- getSamples(MEDIP = T)
   
   ALTs <- paste0("Hyper_", ClassTypes)
   
-  COUNTS_samples <- parallel::mclapply(1:length(AllSample), function(i){
+  #COUNTS_samples <- parallel::mclapply(1:length(AllSample), function(i){
     
-    sample <- AllSample[i]
-    bam <- ALL_BAM_MEDIP[i]
+    #sample <- AllSample[i]
+    #bam <- ALL_BAM_MEDIP[i]
       
       path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
       
@@ -282,6 +299,8 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "
         
         resFEATUREs_alt <- Reduce(rbind, resFEATUREs_alt)
         
+        #resFEATUREs_alt <- subset(resFEATUREs_alt, resFEATUREs_alt[,1] >= FILTER_COUNT)
+        
         save(resFEATUREs_alt, file = path_output)
       }else{
         load(path_output)
@@ -289,7 +308,7 @@ saveCoverageDMRs_fromBam <- function(PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "
     
     resFEATUREs_alt
     
-  }, mc.cores = NUM_THREADS) 
+  #}, mc.cores = NUM_THREADS) 
 
 }
 
@@ -323,13 +342,16 @@ merge_Samples_cfMEDIP_Counts <- function(PATH_INITIAL = "./" ,
 
 getFeature_cfMeDIP <- function(AllSample, PATH_INITIAL = "./", ALL_BAM_MEDIP_PATH = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/", SUFFIX_BAM = ".sorted.bam",  ClassTypes = c("Plasma", "Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"), 
                                N_TOP = 3000,
-                               DMR_COUNT_DIR = "output/cfMeDIP/"){
+                               DMR_COUNT_DIR = "output/cfMeDIP/",
+                               FILTER_COUNT = 3){
   
   DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
   
+  if(!file.exists(DMR_COUNT_MERGE_PATH)) merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP = N_TOP, DMR_COUNT_DIR = DMR_COUNT_DIR)
+  
   load(DMR_COUNT_MERGE_PATH)
   
-  COUNTS_samples_merge[COUNTS_samples_merge<3] <- 0
+  COUNTS_samples_merge[COUNTS_samples_merge<FILTER_COUNT] <- 0
   
   score_classes <- lapply(ClassTypes, function(CLASS){
     SUBSET_MTX <- COUNTS_samples_merge[grepl(CLASS, rownames(COUNTS_samples_merge)),]
