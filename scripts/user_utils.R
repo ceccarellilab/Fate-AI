@@ -10,24 +10,18 @@ CLASS_TO_TCGA <- list(
   "Urothelial"  = "TCGA-BLCA"
 )
 
-# remotes::install_github("progenetix/pgxRpi")
-# library("pgxRpi")
-# frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
-#                        filters=c("NCIT:C3224"))
-# pgxFreqplot(frequency)
-
 # Define mapping of class to frequency and file path
 CLASS_PARAMS_WGS <- list(
-  Colon          = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Colorectal_Carcinoma_NCIT_C2955.tsv")),
-  Lung           = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Lung_Carcinoma_NCIT_C4878.tsv")),
-  Prostate       = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Prostate_Carcinoma_NCIT_C4863.tsv")),
-  Urothelial     = list(freq = 22.5,file = paste0(PATH_INITIAL, "data/progenetix/Urothelial_Carcinoma_NCIT_C4030.tsv")),
-  EwS            = list(freq = 10,  file = paste0(PATH_INITIAL, "data/progenetix/Ewing_Sarcoma_NCIT_C4817.tsv")),
-  Mesothelioma   = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/Malignant_Mesothelioma_NCIT_C4456.tsv")),
-  Melanoma       = list(freq = 20,  file = paste0(PATH_INITIAL, "data/progenetix/Melanoma_NCIT_C3224.tsv")),
-  Breast         = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Breast_Carcinoma_NCIT_C4872.tsv")),
-  MM             = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/Multiple_Myeloma_NCIT_C3242.tsv")),
-  Pancreatic     = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/Pancreatic_Adenocarcinoma_NCIT_C8294.tsv"))
+  Colon          = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C2955.tsv")),
+  Lung           = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C4878.tsv")),
+  Prostate       = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C4863.tsv")),
+  Urothelial     = list(freq = 22.5,file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C4030.tsv")),
+  EwS            = list(freq = 10,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C4817.tsv")),
+  Mesothelioma   = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C4456.tsv")),
+  Melanoma       = list(freq = 20,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C3224.tsv")),
+  Breast         = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C4872.tsv")),
+  MM             = list(freq = 25,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C3242.tsv")),
+  Pancreatic     = list(freq = 15,  file = paste0(PATH_INITIAL, "data/progenetix/NCIT_C8294.tsv"))
 )
 
 FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
@@ -39,6 +33,28 @@ SUFFIX_BAM_MEDIP <- ".sorted.bam"
 
 ALL_BAM_WGS_DIR = "/home2/adefalco/Fate-AI/WGS_alignment/output_folder/BAM"
 SUFFIX_BAM_WGS = "_recal.bam"
+
+
+addNewCNV <- function(NCIT_CODE = "C3224"){
+  
+  OUTPUT_PATH <- paste0(PATH_INITIAL, "data/progenetix/NCIT_", NCIT_CODE, ".tsv")
+  
+  if(!file.exists(OUTPUT_PATH)){
+    if(!"pgxRpi" %in% rownames(installed.packages())){
+      remotes::install_github("progenetix/pgxRpi")
+    }
+    
+    library("pgxRpi")
+    frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
+                           filters=c(paste0("NCIT:",NCIT_CODE)))
+    #pgxFreqplot(frequency)
+    
+    #group_id	reference_name	start	end	gain_frequency	loss_frequency	no
+    frequency_df <- as.data.frame(frequency)
+    
+    write.table(frequency_df, file = OUTPUT_PATH, sep = "\t")
+  }
+}
 
 getPathBam <- function(MEDIP = FALSE){
   ifelse(MEDIP, ALL_BAM_DIR <- ALL_BAM_MEDIP_DIR, ALL_BAM_DIR <- ALL_BAM_WGS_DIR)
