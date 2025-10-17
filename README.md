@@ -2,7 +2,7 @@
 
 ## 1) Install Snakemake and SLURM plugin (tested with snakemake 9.12.0)
 ```
-mamba create -c conda-forge -c bioconda -c nodefaults -n snakemake snakemake snakemake-executor-plugin-slurm
+conda create -c conda-forge -c bioconda -c nodefaults -n snakemake snakemake snakemake-executor-plugin-slurm
 conda activate snakemake
 ```
 

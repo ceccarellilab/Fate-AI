@@ -16,7 +16,7 @@ PATH_BAM : "BAM_FILE"
 
 BAM_SUFFIX : "_recal.bam"
 
-# Num Threads
+# Num Threads for each sample
 NUM_THREADS : 40
 
 MAX_FRAG_LENGHT : 550
@@ -36,7 +36,7 @@ SENTIEON_MODULE : "sentieon_202503" #leave empty if you do not have modules  (es
 SENTIEON_PATH : "" #### Define PATH if you do not have modules  (es. /storage/qnap_vol1/SHARED/NGSTOOLS/SENTIEON/sentieon-genomics-202503)
 SENTIEON_LICENSE : "XXX.XXX.X.XXX:XXXX"
 
-#SENTIEON MODELS PATH
+#SENTIEON MODELS PATH (Optional)
 ML_MODEL_N : "SentieonIlluminaWGS2.2.bundle"
 TNSCOPE_FILTER : "tnscope_filter.py"
 
