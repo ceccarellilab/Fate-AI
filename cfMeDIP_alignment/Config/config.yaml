@@ -24,5 +24,3 @@ SAMPTYPE :
   batch1:
     - Melanoma
     - Healthy
-
-EXCLUDE_SAMPLES:
