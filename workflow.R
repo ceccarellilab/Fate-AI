@@ -1,6 +1,6 @@
 ############################################# cfMeDIP-seq ##########################################################################
 
-##### Prepare the necessary cfMeDIP-seq files, identify DMRs, and generate BED files. #####
+# 1) Prepare the necessary cfMeDIP-seq files, identify DMRs, and generate BED files.
 
 PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
@@ -11,9 +11,9 @@ saveDMRs_fromTCGA(PATH_INITIAL = PATH_INITIAL, CancerTypes = as.character(CLASS_
 #Generate BED files of DMRs
 saveBED_TopDMRs(PATH_INITIAL = PATH_INITIAL, ClassTypes = c("Plasma", names(CLASS_TO_TCGA)))
 
-##### Get coverage on DMRs for each sample cfMeDIP-seq ##### 
+# 2) Get coverage on DMRs for each sample cfMeDIP-seq
 
-#### SAMPLES DATA.FRAME ####
+#Data.Frame samples
 AllSample_df <- data.frame(Sample = "ICH20", 
                            pathBAM_WGS = "/home/adefalco/ctDNAanalysis/PipelineAling/SnakePipeline/AllData/ICH20_recal.bam", 
                            pathBAM_MEDIP = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/IPI01S.sorted.bam", 
@@ -22,13 +22,13 @@ AllSample_df <- data.frame(Sample = "ICH20",
 
 lapply(1:nrow(AllSample_df), function(i){
   
+  #Get coverage on DMRs
   saveCoverageDMRs_fromBam(PATH_INITIAL = PATH_INITIAL, 
                            sample = AllSample_df$Sample[i],
                            bam = AllSample_df$pathBAM_MEDIP[i],
                            FASTA_FILE = FASTA_FILE,
                            PATH_SAMTOOLS = PATH_SAMTOOLS,
-                           ClassTypes = AllSample_df$Class[i])
-                           #ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
+                           ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
 })
 
 ############################################# lpWGS ##########################################################################
@@ -53,8 +53,6 @@ saveMetricsBIN(PATH_INITIAL = PATH_INITIAL,
 
 ############################################# Fate-AI(+Meth) ##########################################################################
 
-#### Feature WGS and Medip ####
-
 METHOD_CLASSIFIER <- "glmnet"
 MODEL <- "Fate-AI(+Meth)"
 NUM_THREADS <- 10
@@ -78,8 +76,7 @@ if(MODEL == "Fate-AI"){
   #Features cfMeDIP-seq
   feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$Sample,
                                      PATH_INITIAL = PATH_INITIAL,
-                                     #CLASS = AllSample_df$Class)
-                                     CLASS = c("Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"))
+                                     CLASS = AllSample_df$Class)
   
   feat_mtx <- cbind(feat_WGS, feat_cfmedip)
 
