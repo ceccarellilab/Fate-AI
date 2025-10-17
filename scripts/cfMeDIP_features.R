@@ -93,14 +93,12 @@ saveBED_TopDMRs <- function(PATH_INITIAL = "./", ClassTypes = c("Colon", "Lung_L
     
     file.exists(PATH_WATSON) & file.exists(PATH_CRICK)
   })))
-  
+
   if(!BED_DONE){
     
     library(deconvR) 
     
     data("HumanCellTypeMethAtlas")
-    
-    data("IlluminaMethEpicB5ProbeIDs")
     
     data_DMR <- lapply(ALTs, function(CLASS){
       
