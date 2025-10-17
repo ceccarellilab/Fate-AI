@@ -28,7 +28,7 @@ The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM
 
 ---
 
-### 3️⃣ BAt Options
+### BAM Options
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
@@ -82,6 +82,7 @@ CONFIG_FILE="Fate-AI/WGS_alignment/Config/ENV_USER_OPTIONS.yaml"
 FIXED_CONDA_PATH="Fate-AI/WGS_alignment/output_folder/.snakemake/conda/"
 SAMPLE_IN_PARALLEL="4"
 
+conda activate snakemake
 snakemake --configfile $CONFIG_FILE \
 	--executor slurm --workflow-profile profiles/default/ \
 	-s 1_pipelineAlign_noPlot.Snakefile \
