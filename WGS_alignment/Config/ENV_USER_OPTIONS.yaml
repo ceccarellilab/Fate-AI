@@ -1,9 +1,8 @@
 # SET THE OUTPUT FOLDER
-WORKPATH : "/home2/adefalco/LiquidBiopsy_Data/WGS/TEST_PIPELINE_VARIANT/output_folder/"
-WORKPATH : "/home2/adefalco/LiquidBiopsy_Data/WGS/Delfi/output_folder/"
+WORKPATH : "output_folder/"
 
 # INPUT FASTQ FOLDER
-PATH_FASTQ : "/home2/adefalco/LiquidBiopsy_Data/WGS/TEST_PIPELINE/"
+PATH_FASTQ : "FASTQ/"
 
 # INPUT FASTQ OPTIONS
 PAIRED: True
@@ -13,11 +12,9 @@ FASTQ_SUFFIXES:
 PLATFORM : "ILLUMINA"
 
 # INPUT BAM FOLDER (LEAVE EMPTY IF YOU WANT START FROM FASTQ)
-#PATH_BAM : "/home2/adefalco/LiquidBiopsy_Data/WGS/TEST_PIPELINE_VARIANT/FROM_BAM/"
-PATH_BAM : "/home2/adefalco/LiquidBiopsy_Data/WGS/Delfi/"
+PATH_BAM : "BAM_FILE"
 
 BAM_SUFFIX : "_recal.bam"
-#BAM_SUFFIX : ".sorted_processed.bam"
 
 # Num Threads
 NUM_THREADS : 40
@@ -27,33 +24,25 @@ MAPQ : 30
 BIN_SIZE : 3000000
 
 # reference data files
-FASTA : "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
-DBSNP : "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz"
+FASTA : "bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
+DBSNP : "bcbio/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz"
 
 KNOWN_SITES:
-    MILLS_INDELS : "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/variation/Mills_and_1000G_gold_standard.indels.vcf.gz"
-    1000G_INDELS : "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/variation/1000G_phase1.snps.high_confidence.vcf.gz"
+    MILLS_INDELS : "bcbio/genomes/Hsapiens/hg38/variation/Mills_and_1000G_gold_standard.indels.vcf.gz"
+    1000G_INDELS : "bcbio/genomes/Hsapiens/hg38/variation/1000G_phase1.snps.high_confidence.vcf.gz"
 
 # SENTIEON
 SENTIEON_MODULE : "sentieon_202503" #leave empty if you do not have modules  (es. SENTIEON_MODULE : "") sentieon_202503
 SENTIEON_PATH : "" #### Define PATH if you do not have modules  (es. /storage/qnap_vol1/SHARED/NGSTOOLS/SENTIEON/sentieon-genomics-202503)
-SENTIEON_LICENSE : "192.168.6.249:8990"
+SENTIEON_LICENSE : "XXX.XXX.X.XXX:XXXX"
 
 #SENTIEON MODELS PATH
 ML_MODEL_N : "SentieonIlluminaWGS2.2.bundle"
 TNSCOPE_FILTER : "tnscope_filter.py"
 
-# bcftools PATH
-BCF_DIR : "/storage/qnap_vol1/SHARED/NGSTOOLS/BCBIO/bcbio/anaconda/bin/bcftools"
-
-# bgzip PATH
-BGZIP_DIR : "/storage/qnap_vol1/data/PUBLIC/Tools/lib/bin/bgzip"
-
-#snpEff PATH
-SNPEFF_DIR : "/storage/qnap_vol1/SHARED/NGSTOOLS/BCBIO/bcbio/anaconda/bin/snpEff"
-
-#SAMTOOLS PATH
-SAMTOOLS_DIR : "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
-
-#BED_TOOLS PATH
-BED_TOOLS_DIR : "/storage/qnap_vol1/SHARED/NGSTOOLS/BCBIO2021/bcbio/anaconda/bin/bedtools"
+# tools PATH
+BCF_DIR : "bcbio/anaconda/bin/bcftools"
+BGZIP_DIR : "bcbio/anaconda/bin/bgzip"
+SNPEFF_DIR : "bcbio/anaconda/bin/snpEff"
+SAMTOOLS_DIR : "bcbio/anaconda/bin/samtools"
+BED_TOOLS_DIR : "bcbio/anaconda/bin/bedtools"
