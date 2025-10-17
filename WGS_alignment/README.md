@@ -1,10 +1,10 @@
 # lpWGS alignment
 
-The entire pipeline is implemented using Snakemake .
+The entire pipeline is implemented using Snakemake and is executed on the cluster using Slurm.
 
 The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM files.
-	•	Starting from FASTQ allows end-to-end processing, including alignment, quality filtering, deduplication and recalibration using Sentieon.
-	•	Starting from BAM files skips the alignment step and proceeds directly to GC correction and fragment analysis.
+- Starting from ***FASTQ***: allows end-to-end processing, including alignment, quality filtering, deduplication and recalibration using Sentieon.
+- Starting from ***BAM***: files skips the alignment step and proceeds directly to GC correction and fragment analysis.
 
 ## 1) Set parameters in Config File (Config/ENV_USER_OPTIONS.yaml): 
 
