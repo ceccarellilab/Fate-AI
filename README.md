@@ -14,20 +14,20 @@ Follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.c
 
 ## 4) Fate-AI(+Meth)
 
-### Set Environment Variables
+### 4.1) Set Environment Variables
 
 The Fate-AI(+Meth) pipeline requires several R environment variables to define paths, parameters, and genomic references.
 
 | Variable | Type | Description | Example |
 |----------|------|-------------|---------|
-| `CLASS_TO_TCGA` | list | Maps local cancer class names to TCGA cohort identifiers. | `Colon = "TCGA_COAD"` |
+| `PATH_INITIAL` | string | Root directory of the pipeline project. | `"Fate-AI/"` |
+| `CLASS_TO_TCGA` | list | Maps local cancer class names to TCGA cohort identifiers. | `Urothelial = "TCGA_BLCA"` |
 | `CLASS_PARAMS_WGS` | list | Parameters for each tumor type: frequency of samples (`freq`) and reference file path (`file`). | `Colon = list(freq=25, file=paste0(PATH_INITIAL,"data/progenetix/NCIT_C2955.tsv"))` |
-| `FASTA_FILE` | string | Path to the human genome FASTA file (hg38). | `"/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"` |
-| `PATH_SAMTOOLS` | string | Path to the `samtools` binary. | `"/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"` |
+| `FASTA_FILE` | string | Path to the human genome FASTA file (hg38). | `"/storage/hg38.fa"` |
+| `PATH_SAMTOOLS` | string | Path to the `samtools` binary. | `"bin/samtools"` |
 | `NUM_THREADS` | integer | Number of threads for parallel processing. | `10` |
-| `PATH_INITIAL` | string | Root directory of the pipeline project. | `"/home2/adefalco/Fate-AI/"` |
 
-### Fate-AI.1) Compute fragment lengths in each bin (3Mb)
+### 4.2) Compute fragment lengths in each bin (3Mb) [Fate-AI]
 ```
 AllSample_df <- data.frame(
   Sample = "ICH20", 
@@ -48,7 +48,7 @@ saveFragmBIN_fromBam(
     )
 ```
 
-### Fate-AI.2) Compute fragment lengths in each bin (3Mb)
+### 4.3) Compute fragment lengths in each bin (3Mb) [Fate-AI]
 ```
  saveMetricsBIN(
         PATH_INITIAL = PATH_INITIAL, 
@@ -57,7 +57,7 @@ saveFragmBIN_fromBam(
     )
 ```
 
-### Meth.1) Identify DMRs from TCGA and Methylation Atlas (+Meth)
+### 4.4) Identify DMRs from TCGA and Methylation Atlas [Fate-AI(+Meth)]
 ```
 saveDMRs_fromTCGA(
   PATH_INITIAL = PATH_INITIAL, 
@@ -65,7 +65,7 @@ saveDMRs_fromTCGA(
   NUM_THREADS = NUM_THREADS
 )
 ```
-### Meth.2) Generate BED Files for Top DMRs (+Meth)
+### 4.5) Generate BED Files for Top DMRs [Fate-AI(+Meth)]
 
 ```
 saveBED_TopDMRs(
@@ -74,7 +74,7 @@ saveBED_TopDMRs(
 )
 ```
 
-### Meth.3) Generate BED Files for Top DMRs (+Meth)
+### 4.6) Generate BED Files for Top DMRs [Fate-AI(+Meth)]
 
 ```
 saveBED_TopDMRs(
@@ -83,7 +83,7 @@ saveBED_TopDMRs(
 )
 ```
 
-### Meth.4) Get Coverage on DMRs for Each Sample (+Meth)
+### 4.7) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
 
 ```
 saveCoverageDMRs_fromBam(
@@ -99,7 +99,7 @@ saveCoverageDMRs_fromBam(
 ```
 
 
-### Fate-AI(+Meth).1) Get features
+###  4.8) Get features lpWGS [Fate-AI]
 ```
 feat_WGS <- getFeatureBasedOnCNV(
     AllSample_df$Sample, 
@@ -107,17 +107,22 @@ feat_WGS <- getFeatureBasedOnCNV(
     CLASS_CNV = AllSample_df$Class[1], 
     NUM_THREADS = NUM_THREADS
 )
+```
+
+###  4.9) Get features cfMeDIP [Fate-AI(+Meth)]
+```
 feat_cfmedip <- getFeature_cfMeDIP(
     AllSample_df$Sample,
     PATH_INITIAL = PATH_INITIAL,
     CLASS = AllSample_df$Class[1]
 )
+
+```
+
+### 5) Get prediction [Fate-AI(+Meth)]
+
+```
 feat_mtx <- cbind(feat_WGS, feat_cfmedip)
-```
-
-### Fate-AI(+Meth).2) Get prediction
-
-```
 TEST_INDEX <- NULL
 
 if(is.null(TEST_INDEX)){ #"Matched-cohort"
