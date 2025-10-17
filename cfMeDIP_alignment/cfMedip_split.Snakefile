@@ -6,16 +6,6 @@ import glob
 import re
 import os
 
-def get_fastqFile(wildcards):
-	ls = []
-	if config['PAIRED']==True:
-		ls.append(config['PATH_FASTQ'] + wildcards.sample + "_"+ config['FASTQ_SUFFIXES']["1_SUFFIX"]) 
-		ls.append(config['PATH_FASTQ'] + wildcards.sample + "_"+ config['FASTQ_SUFFIXES']["2_SUFFIX"])
-	else:
-		ls.append(config['PATH_FASTQ'] + wildcards.sample + config['FASTQ_SUFFIX']) 
-
-	return ls
-
 def get_sortedBAM(wildcards):
 	ls = []
 	for exp in config["EXP"]:
@@ -27,25 +17,9 @@ def get_sortedBAM(wildcards):
 					os.makedirs(path)
 			path = "%s/%s/%s/" % (config["DATDIR"],exp,samptype)
 			print(path)
-			#os.chdir(path)
-			#samples = set([re.sub("_R[1-2]_001.fastq.gz", "", i) for i in glob.glob('*.fastq.gz')]) 
 			print(glob.glob('%s*.fastq.gz' % path))
 			samples = set([re.sub("_R[1-2]_001.fastq.gz", "", i) for i in glob.glob('%s*.fastq.gz' % path)]) 
-			print(samples)
 			samples = set([re.sub(path, "", i) for i in samples]) 
-
-			# print("OLD")
-			print(samples)
-
-			# print("glob.glob")
-			# print(glob.glob('%s*.fastq.gz' % path))
-			
-			samples_old = samples.copy()
-			#r for sample in samples_old:
-			#r	if sample in config["EXCLUDE_SAMPLES"]:
-			#r		samples.remove(sample)
-
-			# print("NEW")
 			print(samples)
 
 			#samples = set([re.sub("_[1-2].fq.gz", "", i) for i in glob.glob('*.fq.gz')]) 
@@ -66,47 +40,18 @@ def getNumSampleExp(exper):
 	sizeExp = 0
 	for samptype in config["SAMPTYPE"][exper]:
 		path = "%s/%s/%s/" % (config["DATDIR"],exper,samptype)
-		#os.chdir(path)
 
 		samples = set([re.sub("_R[1-2]_001.fastq.gz", "", i) for i in glob.glob('%s*.fastq.gz' % path)]) 
-		# samples = set([re.sub("_R[1-2]_001.fastq.gz", "", i) for i in glob.glob('*.fastq.gz')]) 
 		
 		samples = set([re.sub(path, "", i) for i in samples]) 
-
-		# print("n samples before exclusion")
-		# print(len(samples))
-		samples_old = samples.copy()
-		#r for sample in samples_old:
-		#r	if sample in config["EXCLUDE_SAMPLES"]:
-		#r 		samples.remove(sample)
-
-		#samples = set([re.sub("_[1-2].fq.gz", "", i) for i in glob.glob('*.fq.gz')]) 
+		
 		print(samples)
 		sizeExp = sizeExp + len(samples)
 	return sizeExp
 
-def get_class(wildcards):
-	ls = []
-	for exp in config["EXP"]:
-		if config["SAMPTYPE"][exp][0] == "control":
-#		if config["SAMPTYPE"][exp][0] == "CC":
-			lab_control = config["SAMPTYPE"][exp][0]
-			lab_tumor = config["SAMPTYPE"][exp][1]
-		else:
-			lab_control = config["SAMPTYPE"][exp][1]
-			lab_tumor = config["SAMPTYPE"][exp][0]	
-		if config["MODELSELECTION"]=="LeaveOneOut":
-			for i in range(1,getNumSampleExp(exp)+1):
-				ls.append("%s/MEDIPS_%s/%s/results/sampleprob_table_%s_%s_%s_%s.txt" % (config["OUTDIR"],config["WS"],exp,lab_tumor,lab_control,config["METHOD"], i))
-		elif config["MODELSELECTION"]=="ShuffleSplit":
-			for i in range(1,config["N_SPLITS"]+1):
-				ls.append("%s/MEDIPS_%s/%s/results/sampleprob_table_%s_%s_%s_%s.txt" % (config["OUTDIR"],config["WS"],exp,lab_tumor,lab_control,config["METHOD"], i))	
-	return ls
-
 
 # --- snakemake rules ---
 
-#shell
 
 # rule to run the whole workflow
 rule workflow:
@@ -117,7 +62,6 @@ rule workflow:
 
 rule fastqc_initial:
     input:
-        #get_fastqFile
         r1 = lambda wildcards: config['PATH_FASTQ'] + wildcards.sample + "_" + config['FASTQ_SUFFIXES']["1_SUFFIX"],
         r2 = lambda wildcards: config['PATH_FASTQ'] + wildcards.sample + "_" + config['FASTQ_SUFFIXES']["2_SUFFIX"]
     output:
@@ -142,7 +86,6 @@ rule fastqc_initial:
 
 rule trim_galore:
     input:
-        #get_fastqFile
         r1 = lambda wildcards: config['PATH_FASTQ'] + wildcards.sample + "_" + config['FASTQ_SUFFIXES']["1_SUFFIX"],
         r2 = lambda wildcards: config['PATH_FASTQ'] + wildcards.sample + "_" + config['FASTQ_SUFFIXES']["2_SUFFIX"]
     threads: 1
@@ -182,9 +125,7 @@ rule bowtie2_map:
         index = config["INDEX"],
         genome = config["GENOME_index"],   # set this in config or params from shell env
         sam = "{outdir}/bowtie2/{group}/{sampletype}/{sample}.sam",
-        #logfold = "{outdir}/bowtie2_log/{sample}.log",
         bowtie2_path = config["BOWTIE2PATH"],
-        #bowtie2_path = "bowtie2",
         n_threads = config["NUM_THREADS"],
         samtools_path = config["SAMTOOLSPATH"]
     log:

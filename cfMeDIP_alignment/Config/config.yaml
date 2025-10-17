@@ -1,0 +1,28 @@
+#MAPPING
+OUTDIR : "output_folder/" #Output folder
+DATDIR : "FASTQ/"s #Fastq Data Folder (EX. DATADIT/EXP/SAMPTYPE -> HOME/DATI/GSE87096/CONTROL - HOME/DATI/GSE87096/CRC)
+INDEX : bcbio/genomes/Hsapiens/hg38/bowtie2
+SAMTOOLSPATH : bcbio/anaconda/bin/samtools #Samtools PATH
+BOWTIE2PATH : bcbio/anaconda/bin/bowtie2 #Bowtie2 PATH
+FASTQCPATH : export PATH="/home/adefalco/cfBreast/FastQC:$PATH"
+CUTADAPTPATH: bcbio/anaconda/bin/cutadapt
+TRIMGALOREPATH: tools/TrimGalore-0.6.6/trim_galore
+
+GENOME_index: "hg38"
+PATH_FASTQ : "FASTQ/"
+FASTQ_SUFFIXES:
+    1_SUFFIX : "R1_001.fastq.gz"
+    2_SUFFIX : "R2_001.fastq.gz" 
+NUM_THREADS : 40
+
+#Datasets
+EXP :
+  - "batch1"
+
+#Sample types in each dataset
+SAMPTYPE : 
+  batch1:
+    - Melanoma
+    - Healthy
+
+EXCLUDE_SAMPLES:
