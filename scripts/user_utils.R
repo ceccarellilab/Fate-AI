@@ -61,6 +61,17 @@ getSamples <- function(MEDIP = FALSE){
 }
 
 
+normalizeMatrix <- function(feat_mtx, Cohort = ""){
+  NUM_FEATURES <- ncol(feat_mtx)
+  feat_mtx$Cohort = Cohort
+  feat_mtx$Sample <- rownames(feat_mtx)
+  feat_mtx_norm <- as.data.frame(feat_mtx %>% dplyr::group_by(Cohort) %>% dplyr::mutate_at(colnames(feat_mtx)[1:NUM_FEATURES], function(x) minMaxNorm(x, min(x), max(x))))
+  feat_mtx_norm <- feat_mtx_norm[1:NUM_FEATURES]
+  rownames(feat_mtx_norm) <- rownames(feat_mtx)
+  feat_mtx_norm
+}
+
+
 
 
 

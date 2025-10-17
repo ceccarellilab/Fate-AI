@@ -1,4 +1,6 @@
-##### WORKFLOW cfMEDIP#####
+############################################# cfMeDIP-seq ##########################################################################
+
+##### Prepare the necessary cfMeDIP-seq files, identify DMRs, and generate BED files. #####
 
 PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
@@ -9,94 +11,85 @@ saveDMRs_fromTCGA(PATH_INITIAL = PATH_INITIAL, CancerTypes = as.character(CLASS_
 #Generate BED files of DMRs
 saveBED_TopDMRs(PATH_INITIAL = PATH_INITIAL, ClassTypes = c("Plasma", names(CLASS_TO_TCGA)))
 
-AllSample_df <- data.frame(sample = getSamples(MEDIP = T), pathBAM = getPathBam(MEDIP = T), row.names = getSamples(MEDIP = T))
+##### Get coverage on DMRs for each sample cfMeDIP-seq ##### 
 
-(load("~/home3/Fate-AI/FIGURE/FIGURES_paper/data/AllSample_ALL_with_coverage_MEDIP.RData"))
-AllSample_ALL <- AllSample_ALL["IPH20",]
-
-AllSample_df <- data.frame(sample = AllSample_ALL$IC_code, pathBAM_WGS = AllSample_ALL$PATH_BAM_WGS, pathBAM_MEDIP = AllSample_ALL$PATH_BAM_MEDIP, Class = AllSample_ALL$Class, row.names = AllSample_ALL$IC_code)
-
+#### SAMPLES DATA.FRAME ####
+AllSample_df <- data.frame(Sample = "ICH20", 
+                           pathBAM_WGS = "/home/adefalco/ctDNAanalysis/PipelineAling/SnakePipeline/AllData/ICH20_recal.bam", 
+                           pathBAM_MEDIP = "/home3/adefalco/Fate-AI/ScriptMedip/BAM_MEDIP/IPI01S.sorted.bam", 
+                           Class = "Urothelial", 
+                           row.names = "ICH20")
 
 lapply(1:nrow(AllSample_df), function(i){
   
-  #Get coverage on DMRs for each sample
   saveCoverageDMRs_fromBam(PATH_INITIAL = PATH_INITIAL, 
-                           sample = AllSample_df$sample[i],
+                           sample = AllSample_df$Sample[i],
                            bam = AllSample_df$pathBAM_MEDIP[i],
                            FASTA_FILE = FASTA_FILE,
                            PATH_SAMTOOLS = PATH_SAMTOOLS,
-                           #AllSample_df$Class)
-                           ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
+                           ClassTypes = AllSample_df$Class[i])
+                           #ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
 })
 
-#Get features (cfMeDIP)
-feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$sample,
-                                   PATH_INITIAL = PATH_INITIAL,
-                                   #CLASS = AllSample_df$Class)
-                                   CLASS = c("Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"))
-
-
-##### WORKFLOW WGS #####
-
-PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
-lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
-
-AllSample_df <- data.frame(sample = getSamples(), pathBAM = getPathBam(), row.names = getSamples())
+############################################# lpWGS ##########################################################################
 
 lapply(1:nrow(AllSample_df), function(i){
 
+# Get fragment lenght in each bin (3MB)
 saveFragmBIN_fromBam(PATH_INITIAL = PATH_INITIAL, 
-                     sample = AllSample_df$sample[i], 
-                     bam = AllSample_df$pathBAM[i], 
+                     sample = AllSample_df$Sample[i], 
+                     bam = AllSample_df$pathBAM_WGS[i], 
                      NUM_THREADS = NUM_THREADS, 
                      PATH_SAMTOOLS = PATH_SAMTOOLS, 
                      FASTA_FILE = FASTA_FILE, 
                      SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS))
-  
+
+# Get metrics each bin (3MB)  
 saveMetricsBIN(PATH_INITIAL = PATH_INITIAL, 
-                 sample = AllSample_df$sample[i],
+                 sample = AllSample_df$Sample[i],
                  NUM_THREADS = NUM_THREADS)
 
 })
 
-feat_WGS <- getFeatureBasedOnCNV(AllSample_df$sample, PATH_INITIAL = PATH_INITIAL, 
-                                 CLASS_CNV = names(CLASS_PARAMS_WGS)[1], 
-                                 NUM_THREADS = NUM_THREADS)
-
+############################################# Fate-AI(+Meth) ##########################################################################
 
 #### Feature WGS and Medip ####
 
-lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
-
-CLASS <- "Colon"
 METHOD_CLASSIFIER <- "glmnet"
 MODEL <- "Fate-AI(+Meth)"
 NUM_THREADS <- 10
 
+CLASS_CNV_METH <- "Urothelial"
+
 if(MODEL == "Fate-AI"){
   
-  feat_mtx <- getFeatureBasedOnCNV(AllSample, PATH_INITIAL = PATH_INITIAL, 
+  #Features WGS
+  feat_mtx <- getFeatureBasedOnCNV(AllSample$Sample, PATH_INITIAL = PATH_INITIAL, 
                                    CLASS_CNV = names(CLASS_PARAMS_WGS)[1], 
                                    NUM_THREADS = NUM_THREADS)
   METHOD_CLASSIFIER <- "glmnet"
   
 }else if(MODEL == "Fate-AI(+Meth)"){
   
-  feat_WGS <- getFeatureBasedOnCNV(AllSample, PATH_INITIAL = PATH_INITIAL, 
-                                   CLASS_CNV = CLASS, 
+  #Features WGS
+  feat_WGS <- getFeatureBasedOnCNV(AllSample_df$Sample, PATH_INITIAL = PATH_INITIAL, 
+                                   CLASS_CNV = AllSample_df$Class[1], 
                                    NUM_THREADS = NUM_THREADS)
-  medip_mtx <- getFeatMEDIP_last_COUNT(AllSample, )
-  feat_mtx <- cbind(feat_mtx, medip_mtx)
+  #Features cfMeDIP-seq
+  feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$Sample,
+                                     PATH_INITIAL = PATH_INITIAL,
+                                     #CLASS = AllSample_df$Class)
+                                     CLASS = c("Colon", "Prostate", "Breast", "Lung", "Mesotelioma", "Melanoma", "Urothelial"))
+  
+  feat_mtx <- cbind(feat_WGS, feat_cfmedip)
 
 }
 
 METHOD_CLASSIFIER <- "glmnet"
 
-feat_mtx <- normalizeMatrixDataset(feat_mtx, AllSample)
+feat_mtx <- normalizeMatrix(feat_mtx)
 
-file_name = paste(MODEL, CLASS, METHOD_CLASSIFIER, sep = "_")
-
-file_name <- paste0(file_name, ".RData")
+TEST_INDEX <- NULL
 
 if(is.null(TEST_INDEX)){
   prediction <- classifyMATRIX(feat_mtx, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, method = METHOD_CLASSIFIER)
@@ -106,11 +99,7 @@ if(is.null(TEST_INDEX)){
   TYPE = "Cross-cohort"
 }
 
-AUC <- getAUC(prediction, label0 = CLASS)
-
-resAUCs <- data.frame(AUC = AUC, TYPE = TYPE, METHOD_CLASSIFIER = METHOD_CLASSIFIER, MODEL = MODEL)
-
-list(prediction, resAUCs)
+prediction
   
 
     

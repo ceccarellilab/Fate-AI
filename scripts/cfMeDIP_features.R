@@ -120,7 +120,7 @@ saveBED_TopDMRs <- function(PATH_INITIAL = "./", ClassTypes = c("Colon", "Lung_L
         CLASS_c <- gsub("Hyper_", "", CLASS)
         
         if (!CLASS_c %in% names(CLASS_TO_TCGA)) {
-          stop(paste("Unknown CLASS_c:", CLASS_c))
+          stop(paste("Unknown CLASS:", CLASS_c, "in TCGA"))
         }
         
         tcga_code <- CLASS_TO_TCGA[[CLASS_c]]

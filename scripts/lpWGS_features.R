@@ -521,7 +521,7 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
   library(GenomicRanges)
   
   if (!CLASS %in% names(CLASS_PARAMS_WGS)) {
-    stop("Unknown CLASS: ", CLASS)
+    stop("Unknown CLASS: ", CLASS, ", specify CNV file!")
   }
   
   params <- CLASS_PARAMS_WGS[[CLASS]]

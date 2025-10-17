@@ -17,7 +17,7 @@ PLATFORM : "ILLUMINA"
 PATH_BAM : "/home2/adefalco/LiquidBiopsy_Data/WGS/Delfi/"
 
 BAM_SUFFIX : "_recal.bam"
-BAM_SUFFIX : ".sorted_processed.bam"
+#BAM_SUFFIX : ".sorted_processed.bam"
 
 # Num Threads
 NUM_THREADS : 40
