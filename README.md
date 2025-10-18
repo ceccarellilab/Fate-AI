@@ -48,7 +48,7 @@ saveFragmBIN_fromBam(
     )
 ```
 
-### 4.3) Compute fragment lengths in each bin (3Mb) [Fate-AI]
+### 4.3) Compute metrics in each bin (3Mb) [Fate-AI]
 ```
  saveMetricsBIN(
         PATH_INITIAL = PATH_INITIAL, 
