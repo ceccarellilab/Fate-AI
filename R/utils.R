@@ -14,8 +14,12 @@ setup_environment <- function(config_path = "Config/config.yaml") {
   message("Config file loaded")
   
   # Load Fate-AI functions
-  lapply(as.list(list.files(paste0(config$PATH_INITIAL, "R/"), pattern = ".R")), function(x) source(paste0(config$PATH_INITIAL, "R/",x)))
+  lapply(as.list(list.files(paste0(PATH_INITIAL, "R/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "R/",x)))
   message("Fate-AI functions loaded")
+  
+  ### Get CNV From Progenetix [Fate-AI]
+  lapply(lapply(CLASS_PARAMS_WGS, function(x) x$NCIT), function(NCIT) saveCNV_fromProgenetix(NCIT_CODE = NCIT))
+  message("CNV from Progenetix obtained")
   
   ### Identify DMRs from TCGA and Methylation Atlas [Fate-AI(+Meth)]
   saveDMRs_fromTCGA(

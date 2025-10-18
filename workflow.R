@@ -1,26 +1,7 @@
 ###### setup_environment ######
 
-setup_environment <- function(config_path = "Config/config.yaml") {
-  # Load libraries
-  required_pkgs <- c("yaml", "caret", "TCGAbiolinks", "SummarizedExperiment","parallel", 
-                     "doParallel", "pgxRpi", "dplyr", "GenomicRanges", "philentropy", "deconvR")
-  invisible(lapply(required_pkgs, function(pkg) {
-    if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
-    library(pkg, character.only = TRUE)
-  }))
-  
-  # Load config file
-  config <- read_yaml(config_path)
-  list2env(config, envir = .GlobalEnv)
-  
-  # Load Fate-AI functions
-  script_path <- paste0(config$PATH_INITIAL, "scripts/")
-  lapply(as.list(list.files(script_path, pattern = ".R")), function(x) source(paste0(script_path,x)))
-  
-  message("✅ Environment successfully initialized.")
-}
-
 setwd("/home2/adefalco/Fate-AI/")
+source("/home2/adefalco/Fate-AI/R/utils.R")
 setup_environment()
 
 
@@ -32,14 +13,6 @@ setup_environment()
 
 #PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
 #lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
-
-
-
-#Get DMRs from TCGA and Methylation Atlas Deconvolution
-saveDMRs_fromTCGA(CancerTypes = as.character(CLASS_TO_TCGA))
-
-#Generate BED files of DMRs
-saveBED_TopDMRs(ClassTypes = c("Plasma", names(CLASS_TO_TCGA)))
 
 # 2) Get coverage on DMRs for each sample cfMeDIP-seq
 

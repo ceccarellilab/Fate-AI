@@ -1,7 +1,7 @@
 
 ##### Download new CNV profile from Progenetix (TO TEST) ##### 
 
-addNewCNV <- function(NCIT_CODE = "C3224"){
+saveCNV_fromProgenetix <- function(NCIT_CODE = "C3224"){
   
   OUTPUT_PATH <- paste0(PATH_INITIAL, "data/progenetix/NCIT_", NCIT_CODE, ".tsv")
   
@@ -41,14 +41,11 @@ getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_
 saveFragmBIN_fromBam <- function(sample, 
                                  bam,
                                  FASTA_FILE,
-                                 PATH_SAMTOOLS,
                                  SUFFIX_BAM = "_recal.bam",
-                                 PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output",
-                                 SUFFIX_SAVE_FILE = "_res_frag_motif.RData",
-                                 OUTPUT_DIR = "output/WGS/",
-                                 FRAGM_DIR = "FRAGM_BIN/"){
+                                 PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output"){
 
-  path_output <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE_WGS, SUFFIX_SAVE_FILE)
+  path_output <- getPathFragm(sample)
+  print(path_output)
   
   BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
   
@@ -208,10 +205,7 @@ getPathMetrics <- function(sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "ME
 }
 
 saveMetricsBIN <- function(sample,
-                           GC_CORR = TRUE,
-                           OUTPUT_DIR = "output/WGS/",
-                           FRAGM_DIR = "FRAGM_BIN/",
-                           METRICS_DIR = "METRICS_BIN/"){
+                           GC_CORR = TRUE){
 
 #dirRead <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
 #dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
@@ -242,9 +236,9 @@ coverage_nucleosome <- function(frag_lengths){
 
 #path_fragm_data <- paste0(dirRead, sample, "_", as.integer(BIN_SIZE_WGS), "_res_frag_motif.RData")
 
-path_fragm_data <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE_WGS)
+path_fragm_data <- getPathFragm(sample)
 
-path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE_WGS)
+path_output <- getPathMetrics(sample)
 
 #path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE_WGS),"_DF.RData")
 
