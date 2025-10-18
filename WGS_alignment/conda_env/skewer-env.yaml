@@ -1,6 +1,0 @@
-name: skewer-env
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - skewer
