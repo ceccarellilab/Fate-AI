@@ -1,5 +1,28 @@
 
-getDirFragm <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/"){
+##### Download new CNV profile from Progenetix (TO TEST) ##### 
+
+addNewCNV <- function(NCIT_CODE = "C3224"){
+  
+  OUTPUT_PATH <- paste0(PATH_INITIAL, "data/progenetix/NCIT_", NCIT_CODE, ".tsv")
+  
+  if(!file.exists(OUTPUT_PATH)){
+    if(!"pgxRpi" %in% rownames(installed.packages())){
+      remotes::install_github("progenetix/pgxRpi")
+    }
+    
+    library("pgxRpi")
+    frequency <- pgxLoader(type="cnv_frequency", output ='pgxfreq',
+                           filters=c(paste0("NCIT:",NCIT_CODE)))
+    #pgxFreqplot(frequency)
+    
+    #group_id	reference_name	start	end	gain_frequency	loss_frequency	no
+    frequency_df <- as.data.frame(frequency)
+    
+    write.table(frequency_df, file = OUTPUT_PATH, sep = "\t")
+  }
+}
+
+getDirFragm <- function(OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/"){
   dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
   if (!dir.exists(dirSave)) {
     dir.create(dirSave)
@@ -7,18 +30,15 @@ getDirFragm <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", FRAGM_D
   dirSave
 }
 
-getPathFragm <- function(PATH_INITIAL = "./", sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/",  BIN_SIZE = 3000000,SUFFIX_SAVE_FILE = "_res_frag_motif.RData"){
-  dirSave <- getDirFragm(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
+getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/",  BIN_SIZE = 3000000,SUFFIX_SAVE_FILE = "_res_frag_motif.RData"){
+  dirSave <- getDirFragm(OUTPUT_DIR, FRAGM_DIR)
   path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
   path_output
 }
 
 
-
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
-
-saveFragmBIN_fromBam <- function(PATH_INITIAL = "./", 
-                                 sample, 
+saveFragmBIN_fromBam <- function(sample, 
                                  bam,
                                  FASTA_FILE,
                                  PATH_SAMTOOLS,
@@ -33,7 +53,7 @@ saveFragmBIN_fromBam <- function(PATH_INITIAL = "./",
                                  OUTPUT_DIR = "output/WGS/",
                                  FRAGM_DIR = "FRAGM_BIN/"){
 
-  path_output <- getPathFragm(PATH_INITIAL, sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE, SUFFIX_SAVE_FILE)
+  path_output <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE, SUFFIX_SAVE_FILE)
   
   BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE), ".bed")
   
@@ -178,7 +198,7 @@ saveFragmBIN_fromBam <- function(PATH_INITIAL = "./",
 
 ##### Compute metrics in 3Mb region ####
 
-getDirMetrics <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/"){
+getDirMetrics <- function(OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/"){
   dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
   if (!dir.exists(dirSave)) {
     dir.create(dirSave)
@@ -186,14 +206,13 @@ getDirMetrics <- function(PATH_INITIAL = "./", OUTPUT_DIR = "output/WGS/", METRI
   dirSave
 }
 
-getPathMetrics <- function(PATH_INITIAL = "./", sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/",  BIN_SIZE = 3000000, MOTIF = FALSE){
-  dirSave <- getDirMetrics(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
+getPathMetrics <- function(sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/",  BIN_SIZE = 3000000, MOTIF = FALSE){
+  dirSave <- getDirMetrics(OUTPUT_DIR, METRICS_DIR)
   ifelse(MOTIF, path_output <- paste0(dirSave,sample, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"), path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
   path_output
 }
 
-saveMetricsBIN <- function(PATH_INITIAL = "./", 
-                           sample,
+saveMetricsBIN <- function(sample,
                            BIN_SIZE = 3000000,
                            NUM_THREADS = 40,
                            GC_CORR = TRUE,
@@ -230,9 +249,9 @@ coverage_nucleosome <- function(frag_lengths){
 
 #path_fragm_data <- paste0(dirRead, sample, "_", as.integer(BIN_SIZE), "_res_frag_motif.RData")
 
-path_fragm_data <- getPathFragm(PATH_INITIAL, sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE)
+path_fragm_data <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE)
 
-path_output <- getPathMetrics(PATH_INITIAL,sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE)
+path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE)
 
 #path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
 
@@ -278,7 +297,7 @@ for(i in 1:length(resFEATUREs)){
 
 save(df, file = path_output)
 
-path_output <- getPathMetrics(PATH_INITIAL,sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE, MOTIF = TRUE)
+path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE, MOTIF = TRUE)
 
 df <- data.frame(row.names = names(resFEATUREs))
 
@@ -527,7 +546,7 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
   params <- CLASS_PARAMS_WGS[[CLASS]]
   
   FREQ <- params$freq
-  CNV_FREQ <- read.table(params$file, header = TRUE)
+  CNV_FREQ <- read.table(paste0(PATH_INITIAL, "data/progenetix/NCIT_",params$NCIT,".tsv"), header = TRUE) #params$file 
   
   if(!is.null(FREQ_MANUAL)){
     FREQ_GAIN <- FREQ_LOSS <- FREQ_MANUAL
@@ -561,7 +580,6 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
 #### Extract WGS features based on CNV regions from Progenetix ####
 
 getFeatureBasedOnCNV <- function(AllSample, 
-          PATH_INITIAL,
           CLASS_CNV, 
           NUM_THREADS = 30,
           FREQ = NULL, 
@@ -587,10 +605,10 @@ getFeatureBasedOnCNV <- function(AllSample,
     #print(sample$FASTQ_Name)
     
  
-    pathFragm <- getPathFragm(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
+    pathFragm <- getPathFragm(sample, BIN_SIZE = BIN_SIZE)
     load(pathFragm)
     
-    pathMetrics <- getPathMetrics(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
+    pathMetrics <- getPathMetrics(sample, BIN_SIZE = BIN_SIZE)
     
     #load(sample$PathFragmentomics)
     region_GR <- getRegionBinSample(pathMetrics)
@@ -675,7 +693,7 @@ getFeatureBasedOnCNV <- function(AllSample,
   #Local Features
   resECDF_ALL <- parallel::mclapply(AllSample, function(sample){
     
-    pathMetrics <- getPathMetrics(PATH_INITIAL, sample, BIN_SIZE = BIN_SIZE)
+    pathMetrics <- getPathMetrics(sample, BIN_SIZE = BIN_SIZE)
     MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = pathMetrics, features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
     rownames(MTX) <- sample
     

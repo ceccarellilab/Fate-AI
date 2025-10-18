@@ -1,0 +1,46 @@
+FASTA_FILE: "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
+PATH_SAMTOOLS: "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
+NUM_THREADS: 10
+PATH_INITIAL: "/home2/adefalco/Fate-AI/"
+
+CLASS_TO_TCGA:
+  Colon: "TCGA_COAD"
+  Lung_LUAD: "TCGA-LUAD"
+  Lung_LUSC: "TCGA-LUSC"
+  Breast: "TCGA-BRCA"
+  Prostate: "TCGA-PRAD"
+  Melanoma: "TCGA-SKCM"
+  Mesothelioma: "TCGA-MESO"
+  Urothelial: "TCGA-BLCA"
+
+CLASS_PARAMS_WGS:
+  Colon:
+    freq: 25
+    NCIT: "C2955"
+  Lung:
+    freq: 25
+    NCIT: "C4878"
+  Prostate:
+    freq: 25
+    NCIT: "C4863"
+  Urothelial:
+    freq: 22.5
+    NCIT: "C4030"
+  EwS:
+    freq: 10
+    NCIT: "C4817"
+  Mesothelioma:
+    freq: 15
+    NCIT: "C4456"
+  Melanoma:
+    freq: 20
+    NCIT: "C3224"
+  Breast:
+    freq: 25
+    NCIT: "C4872"
+  MM:
+    freq: 25
+    NCIT: "C3242"
+  Pancreatic:
+    freq: 15
+    NCIT: "C8294"

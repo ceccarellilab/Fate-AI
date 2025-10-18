@@ -14,18 +14,23 @@ Follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.c
 
 ## 4) Fate-AI(+Meth)
 
-### 4.1) Set Environment Variables
+### 4.1) Set parameters in Config File (Config/config.yaml): 
 
-The Fate-AI(+Meth) pipeline requires several R environment variables to define paths, parameters, and genomic references.
+### Paths and General Settings
 
 | Variable | Type | Description | Example |
 |----------|------|-------------|---------|
 | `PATH_INITIAL` | string | Root directory of the pipeline project. | `"Fate-AI/"` |
-| `CLASS_TO_TCGA` | list | Maps local cancer class names to TCGA cohort identifiers. | `Urothelial = "TCGA_BLCA"` |
-| `CLASS_PARAMS_WGS` | list | Parameters for each tumor type: frequency of samples (`freq`) and reference file path (`file`). | `Colon = list(freq=25, file=paste0(PATH_INITIAL,"data/progenetix/NCIT_C2955.tsv"))` |
-| `FASTA_FILE` | string | Path to the human genome FASTA file (hg38). | `"/storage/hg38.fa"` |
+| `FASTA_FILE` | string | Path to the human genome FASTA file (hg38). | `"bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"` |
 | `PATH_SAMTOOLS` | string | Path to the `samtools` binary. | `"bin/samtools"` |
 | `NUM_THREADS` | integer | Number of threads for parallel processing. | `10` |
+
+### Primary Tumor Mapping
+
+| Variable | Type | Description | Example |
+|----------|------|-------------|---------|
+| `CLASS_PARAMS_WGS` | list | Parameters for each cancer type: CNV frequency (`freq`) and NCIT code (`NCIT`). [Fate-AI]  | `Colon: freq: 25 NCIT: "C2955"` |
+| `CLASS_TO_TCGA` | list | Maps cancer type to TCGA identifiers. [Fate-AI(+Meth)] | `Urothelial : "TCGA_BLCA"` |
 
 ### 4.2) Compute fragment lengths in each bin (3Mb) [Fate-AI]
 ```
