@@ -1,1 +1,30 @@
-../../../../../../home3/adefalco/Fate-AI/conda_env/GCparagon_py3.10_env.yml
+name: GCparagon  # install with: mamba env create -f GCparagon_py3.10_env.yml; should also work with conda
+channels:
+  - conda-forge
+  - bioconda
+  - plotly
+  - nodefaults
+dependencies:
+  - bedtools
+  - python=3.10
+  - pip
+  - numpy
+  - samtools
+  - pysam
+  - natsort
+  - py2bit
+  - cycler
+  - pandas
+  - scipy
+  - ucsc-fatotwobit
+  - twobitreader
+  - plotly=5.19.0
+  - python-kaleido=0.2.1
+  - psutil
+  - requests
+  - memory_profiler
+  - pybedtools
+  - polars
+  - scikit-learn
+  - matplotlib  # for memory profiling plots
+  - pyranges

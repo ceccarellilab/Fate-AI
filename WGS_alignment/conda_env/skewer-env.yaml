@@ -1,1 +1,6 @@
-../../../../../../home3/adefalco/Fate-AI/conda_env/skewer-env.yaml
+name: skewer-env
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - skewer

@@ -1,1 +1,9 @@
-../../../../../../home3/adefalco/Fate-AI/conda_env/envR.yml
+name: fragmR
+channels:
+  - R
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-pbapply
+  - r-dplyr
