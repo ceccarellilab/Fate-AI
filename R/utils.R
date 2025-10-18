@@ -10,11 +10,24 @@ setup_environment <- function(config_path = "Config/config.yaml") {
   
   # Load config file
   config <- read_yaml(config_path)
-  
   list2env(config, envir = .GlobalEnv)
+  message("Config file loaded")
   
   # Load Fate-AI functions
-  lapply(as.list(list.files(paste0(config$PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(config$PATH_INITIAL, "scripts/",x)))
+  lapply(as.list(list.files(paste0(config$PATH_INITIAL, "R/"), pattern = ".R")), function(x) source(paste0(config$PATH_INITIAL, "R/",x)))
+  message("Fate-AI functions loaded")
+  
+  ### Identify DMRs from TCGA and Methylation Atlas [Fate-AI(+Meth)]
+  saveDMRs_fromTCGA(
+    CancerTypes = as.character(CLASS_TO_TCGA), 
+  )
+  message("DMRs from TCGA obtained")
+
+  ### Generate BED Files for Top DMRs [Fate-AI(+Meth)]
+  saveBED_TopDMRs(
+    ClassTypes = c("Plasma", names(CLASS_TO_TCGA))
+  )
+  message("BED files of DMRs Generated")
   
   message("✅ Environment successfully initialized.")
 }

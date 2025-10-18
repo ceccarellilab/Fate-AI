@@ -55,8 +55,6 @@ lapply(1:nrow(AllSample_df), function(i){
   #Get coverage on DMRs
   saveCoverageDMRs_fromBam(sample = AllSample_df$Sample[i],
                            bam = AllSample_df$pathBAM_MEDIP[i],
-                           FASTA_FILE = FASTA_FILE,
-                           PATH_SAMTOOLS = PATH_SAMTOOLS,
                            ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
 })
 
@@ -67,8 +65,6 @@ lapply(1:nrow(AllSample_df), function(i){
 # Get fragment lenght in each bin (3MB)
 saveFragmBIN_fromBam(sample = AllSample_df$Sample[i], 
                      bam = AllSample_df$pathBAM_WGS[i], 
-                     PATH_SAMTOOLS = PATH_SAMTOOLS, 
-                     FASTA_FILE = FASTA_FILE, 
                      SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS))
 
 # Get metrics each bin (3MB)  
@@ -86,18 +82,17 @@ CLASS_CNV_METH <- "Urothelial"
 if(MODEL == "Fate-AI"){
   
   #Features WGS
-  feat_mtx <- getFeatureBasedOnCNV(AllSample$Sample, PATH_INITIAL = PATH_INITIAL, 
+  feat_mtx <- getFeatureBasedOnCNV(AllSample$Sample, 
                                    CLASS_CNV = names(CLASS_PARAMS_WGS)[1])
   METHOD_CLASSIFIER <- "glmnet"
   
 }else if(MODEL == "Fate-AI(+Meth)"){
   
   #Features WGS
-  feat_WGS <- getFeatureBasedOnCNV(AllSample_df$Sample, PATH_INITIAL = PATH_INITIAL, 
+  feat_WGS <- getFeatureBasedOnCNV(AllSample_df$Sample, 
                                    CLASS_CNV = AllSample_df$Class[1])
   #Features cfMeDIP-seq
   feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$Sample,
-                                     PATH_INITIAL = PATH_INITIAL,
                                      CLASS = AllSample_df$Class)
   
   feat_mtx <- cbind(feat_WGS, feat_cfmedip)

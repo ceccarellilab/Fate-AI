@@ -1,0 +1,31 @@
+Package: Fate-AI
+Type: Package
+Title: Fate-AI
+Version: 1.0.0
+Date: 2025-02-12
+Author: A. De Falco
+Maintainer: A. De Falco <antoniodf92na@gmail.com>
+Description: Fate-AI
+License: Apache-2.0
+biocViews:
+Imports:
+  yaml,
+  caret,
+  TCGAbiolinks,
+  SummarizedExperiment,
+  parallel,
+  doParallel,
+  pgxRpi,
+  dplyr,
+  GenomicRanges,
+  philentropy,
+  deconvR
+LazyLoad: yes
+NeedsCompilation: no
+RoxygenNote: 7.3.1
+Depends: 
+    R (>= 4.3.2)
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

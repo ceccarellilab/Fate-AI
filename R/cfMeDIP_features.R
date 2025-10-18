@@ -81,7 +81,7 @@ saveDMRs_fromTCGA <- function(CancerTypes = c("TCGA-BRCA", "TCGA-LUAD","TCGA-LUS
 
 ######## Select top hypermethylated from TCGA and MethAtlas ########
 
-saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"), N_TOP = 3000, sizeBIN = 300, TCGA_DIR = "data/tcga/", BED_DIR = "data/bed_dmrs/"){
+saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"), TCGA_DIR = "data/tcga/", BED_DIR = "data/bed_dmrs/"){
 
   #Forward = Plus = (+) = Positive = Watson
   #Reverse = Minus = (-) = Negative = Crick
@@ -89,8 +89,8 @@ saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Br
   ALTs <- paste0("Hyper_", ClassTypes)
   
   BED_DONE <- all(unlist(lapply(ALTs, function(ALT){
-    PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")
-    PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")
+    PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Watson.bed")
+    PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Crick.bed")
     
     file.exists(PATH_WATSON) & file.exists(PATH_CRICK)
   })))
@@ -112,7 +112,7 @@ saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Br
         
         Score <- Score[order(Score, decreasing = TRUE)]
         Score <- Score[Score>0]
-        top_Plasma <- names(Score)[1:min(length(Score), N_TOP)]
+        top_Plasma <- names(Score)[1:min(length(Score), N_TOP_DMRs)]
         top_Plasma
       }else{
         
@@ -135,7 +135,7 @@ saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Br
         data_DMR$SCORE <- -log10(data_DMR$p.value.adj.Primary.Tumor.Solid.Tissue.Normal)*data_DMR$FC
         data_DMR <- data_DMR[order(data_DMR$SCORE, decreasing = TRUE),]
         
-        data_DMR <- data_DMR[1:min(nrow(data_DMR), N_TOP),]
+        data_DMR <- data_DMR[1:min(nrow(data_DMR), N_TOP_DMRs),]
         top_Tumor <- rownames(data_DMR)
         top_Tumor
       }
@@ -164,14 +164,14 @@ saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Br
     
     resFEATUREs_alt <- lapply(ALTs, function(ALT){
       
-      PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")
-      PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")
+      PATH_WATSON <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Watson.bed")
+      PATH_CRICK <- paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Crick.bed")
       
       if(!file.exists(PATH_WATSON) | !file.exists(PATH_CRICK)){
         df_BED <- annotation[annotation$probeID %in% (data_DMR[[ALT]]),1:4]
         centerBIN <- df_BED$CpG_end-1
-        df_BED$CpG_beg <- centerBIN - sizeBIN/2
-        df_BED$CpG_end <- centerBIN + sizeBIN/2
+        df_BED$CpG_beg <- centerBIN - BIN_SIZE_MEDIP/2
+        df_BED$CpG_end <- centerBIN + BIN_SIZE_MEDIP/2
         ALT <- gsub(" in Primary Tumor", "",ALT )
         
         write.table(df_BED[df_BED$probe_strand=="+",1:3], file = PATH_WATSON, quote = FALSE, row.names = FALSE, col.names = FALSE)
@@ -190,14 +190,7 @@ saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Br
 
 saveCoverageDMRs_fromBam <- function(sample, 
                                      bam,
-                                     FASTA_FILE = "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa",
-                                     PATH_SAMTOOLS = "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools",
                                      ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"),
-                                     N_TOP = 3000, 
-                                     BIN_SIZE = 300,
-                                     MAPQ = 30,
-                                     MAX_FRAG_LENGHT = 550,
-                                     MIN_FRAG = 20,
                                      SUFFIX_SAVE_FILE = "_res_frag_motif.RData",
                                      tmp_dir = "/temp",
                                      awk_file_filter = "scripts/filter_cfmedip.awk",
@@ -208,11 +201,11 @@ saveCoverageDMRs_fromBam <- function(sample,
 
   dir.create(paste0(PATH_INITIAL, DMR_COUNT_DIR))
   
-  dirSave = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
+  dirSave = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP_DMRs, "_COUNTS/")
   
   ALTs <- paste0("Hyper_", ClassTypes)
   
-      path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
+      path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE_MEDIP),SUFFIX_SAVE_FILE)
       
       if(!file.exists(path_output)){
         
@@ -223,9 +216,9 @@ saveCoverageDMRs_fromBam <- function(sample,
         
         resFEATUREs_alt <- lapply(ALTs, function(ALT){
           
-          watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", "-M -L ", PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(PATH_INITIAL,awk_file_filter))
+          watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", "-M -L ", PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Watson.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(PATH_INITIAL,awk_file_filter))
           
-          crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", "-M -L ", PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(PATH_INITIAL,awk_file_filter))
+          crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", "-M -L ", PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Crick.bed", " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, " -f ", paste0(PATH_INITIAL,awk_file_filter))
           
           #### WATSON
           
@@ -251,29 +244,29 @@ saveCoverageDMRs_fromBam <- function(sample,
           
           
           if (!is.null(watsonFRAG)){
-            watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG,]
+            watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG_LENGHT,]
             watsonFRAG$V1 <- "watsonFRAG"
           }
           if (!is.null(crickFRAG)){
-            crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG,]
+            crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG_LENGHT,]
             crickFRAG$V1 <- "crickFRAG"
           }
           
           watsonFRAG_GR <- GenomicRanges::makeGRangesFromDataFrame(watsonFRAG, seqnames.field = "V2", start.field = "V3", end.field = "V4")
           
-          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Watson.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
+          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Watson.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
           bed_GR <- reduce(resize(bed_GR, width(bed_GR), "start"))
           
           counts_watson <- table(findOverlaps(watsonFRAG_GR, bed_GR)@to)
-          names(counts_watson) <- paste0(names(counts_watson),"_", ALT, "_TOP", N_TOP, "_Watson.bed")
+          names(counts_watson) <- paste0(names(counts_watson),"_", ALT, "_TOP", N_TOP_DMRs, "_Watson.bed")
           
           crickFRAG_GR <- GenomicRanges::makeGRangesFromDataFrame(crickFRAG, seqnames.field = "V2", start.field = "V3", end.field = "V4")
           
-          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP, "_Crick.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
+          bed_GR <- GenomicRanges::makeGRangesFromDataFrame(read.table(paste0(PATH_INITIAL, BED_DIR,ALT, "_TOP", N_TOP_DMRs, "_Crick.bed")), seqnames.field = "V1", start.field = "V2", end.field = "V3")
           bed_GR <- reduce(resize(bed_GR, width(bed_GR), "start"))
           
           counts_crick <- table(findOverlaps(crickFRAG_GR, bed_GR)@to)
-          names(counts_crick) <- paste0(names(counts_crick),"_", ALT, "_TOP", N_TOP, "_Crick.bed")
+          names(counts_crick) <- paste0(names(counts_crick),"_", ALT, "_TOP", N_TOP_DMRs, "_Crick.bed")
           
           counts <- c(counts_watson, counts_crick)
           counts <- as.data.frame(counts)
@@ -294,11 +287,10 @@ saveCoverageDMRs_fromBam <- function(sample,
 
 ##### Aggregate coverage of all samples (save) ####
 
-merge_Samples_cfMEDIP_Counts <- function(N_TOP = 3000,
-                                         DMR_COUNT_DIR = "output/cfMeDIP/"){
+merge_Samples_cfMEDIP_Counts <- function(DMR_COUNT_DIR = "output/cfMeDIP/"){
   
-  dirLoad = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP, "_COUNTS/")
-  DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
+  dirLoad = paste0(PATH_INITIAL, DMR_COUNT_DIR, "FRAGM_EXTR_",N_TOP_DMRs, "_COUNTS/")
+  DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP_DMRs, ".RData")
   
   Res_medip <- lapply(list.files(dirLoad), function(x) get(load(paste0(dirLoad,x))))
   
@@ -322,18 +314,16 @@ merge_Samples_cfMEDIP_Counts <- function(N_TOP = 3000,
 
 getFeature_cfMeDIP <- function(AllSample, 
                                CLASS, 
-                               N_TOP = 3000,
-                               DMR_COUNT_DIR = "output/cfMeDIP/",
-                               FILTER_COUNT = 3){
+                               DMR_COUNT_DIR = "output/cfMeDIP/"){
   
   
   ClassTypes = c("Plasma", CLASS)
   
-  #DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP, ".RData")
-  #if(!file.exists(DMR_COUNT_MERGE_PATH)) merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP = N_TOP, DMR_COUNT_DIR = DMR_COUNT_DIR)
+  #DMR_COUNT_MERGE_PATH <-  paste0(PATH_INITIAL, DMR_COUNT_DIR, "COUNTS_samples_merge_MEDIP_", N_TOP_DMRs, ".RData")
+  #if(!file.exists(DMR_COUNT_MERGE_PATH)) merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP_DMRs = N_TOP_DMRs, DMR_COUNT_DIR = DMR_COUNT_DIR)
   #load(DMR_COUNT_MERGE_PATH)
   
-  COUNTS_samples_merge <- merge_Samples_cfMEDIP_Counts(N_TOP = N_TOP, DMR_COUNT_DIR = DMR_COUNT_DIR)
+  COUNTS_samples_merge <- merge_Samples_cfMEDIP_Counts(N_TOP_DMRs = N_TOP_DMRs, DMR_COUNT_DIR = DMR_COUNT_DIR)
   
   COUNTS_samples_merge[COUNTS_samples_merge<FILTER_COUNT] <- 0
   

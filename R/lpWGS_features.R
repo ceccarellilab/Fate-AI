@@ -30,9 +30,9 @@ getDirFragm <- function(OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/"){
   dirSave
 }
 
-getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/",  BIN_SIZE = 3000000,SUFFIX_SAVE_FILE = "_res_frag_motif.RData"){
+getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/",SUFFIX_SAVE_FILE = "_res_frag_motif.RData"){
   dirSave <- getDirFragm(OUTPUT_DIR, FRAGM_DIR)
-  path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE),SUFFIX_SAVE_FILE)
+  path_output <- paste0(dirSave,sample,"_",as.integer(BIN_SIZE_WGS),SUFFIX_SAVE_FILE)
   path_output
 }
 
@@ -43,18 +43,14 @@ saveFragmBIN_fromBam <- function(sample,
                                  FASTA_FILE,
                                  PATH_SAMTOOLS,
                                  SUFFIX_BAM = "_recal.bam",
-                                 BIN_SIZE = 3000000,
-                                 MAPQ = 30,
-                                 MAX_FRAG_LENGHT = 550,
-                                 MIN_FRAG = 20,
                                  PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output",
                                  SUFFIX_SAVE_FILE = "_res_frag_motif.RData",
                                  OUTPUT_DIR = "output/WGS/",
                                  FRAGM_DIR = "FRAGM_BIN/"){
 
-  path_output <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE, SUFFIX_SAVE_FILE)
+  path_output <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE_WGS, SUFFIX_SAVE_FILE)
   
-  BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE), ".bed")
+  BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
   
   library(parallel)
   library(dplyr)
@@ -112,11 +108,11 @@ saveFragmBIN_fromBam <- function(sample,
     
     
     if (!is.null(watsonFRAG)){
-      watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG,]
+      watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG_LENGHT,]
       watsonFRAG$V1 <- "watsonFRAG"
     }
     if (!is.null(crickFRAG)){
-      crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG,]
+      crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG_LENGHT,]
       crickFRAG$V1 <- "crickFRAG"
     }
     
@@ -154,7 +150,7 @@ saveFragmBIN_fromBam <- function(sample,
       region_weights <-  lapply(resChunks, function(seq){
         fragm_len <- nchar(seq)
         GC_count <- (lengths(regmatches(seq, gregexpr("G", seq))))+(lengths(regmatches(seq, gregexpr("C", seq))))
-        round(GC_bias[(fragm_len-MIN_FRAG)+1,GC_count+1],5)
+        round(GC_bias[(fragm_len-MIN_FRAG_LENGHT)+1,GC_count+1],5)
       })
       
       GC_weight <- unlist(region_weights)
@@ -205,14 +201,13 @@ getDirMetrics <- function(OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN
   dirSave
 }
 
-getPathMetrics <- function(sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/",  BIN_SIZE = 3000000, MOTIF = FALSE){
+getPathMetrics <- function(sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/", MOTIF = FALSE){
   dirSave <- getDirMetrics(OUTPUT_DIR, METRICS_DIR)
-  ifelse(MOTIF, path_output <- paste0(dirSave,sample, "_motif_bin_",as.integer(BIN_SIZE),"_DF.RData"), path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData"))
+  ifelse(MOTIF, path_output <- paste0(dirSave,sample, "_motif_bin_",as.integer(BIN_SIZE_WGS),"_DF.RData"), path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE_WGS),"_DF.RData"))
   path_output
 }
 
 saveMetricsBIN <- function(sample,
-                           BIN_SIZE = 3000000,
                            GC_CORR = TRUE,
                            OUTPUT_DIR = "output/WGS/",
                            FRAGM_DIR = "FRAGM_BIN/",
@@ -245,13 +240,13 @@ coverage_nucleosome <- function(frag_lengths){
   sum(frag_lengths>=MIN_NUCLEOSOME  & frag_lengths<= MAX_NUCLEOSOME)
 }    
 
-#path_fragm_data <- paste0(dirRead, sample, "_", as.integer(BIN_SIZE), "_res_frag_motif.RData")
+#path_fragm_data <- paste0(dirRead, sample, "_", as.integer(BIN_SIZE_WGS), "_res_frag_motif.RData")
 
-path_fragm_data <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE)
+path_fragm_data <- getPathFragm(sample, OUTPUT_DIR, FRAGM_DIR, BIN_SIZE_WGS)
 
-path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE)
+path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE_WGS)
 
-#path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE),"_DF.RData")
+#path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE_WGS),"_DF.RData")
 
 print(sample)
 
@@ -295,7 +290,7 @@ for(i in 1:length(resFEATUREs)){
 
 save(df, file = path_output)
 
-path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE, MOTIF = TRUE)
+path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE_WGS, MOTIF = TRUE)
 
 df <- data.frame(row.names = names(resFEATUREs))
 
@@ -585,9 +580,9 @@ getFeatureBasedOnCNV <- function(AllSample,
           SIZE_BP_AGGR = 5,
           AGGREGATE_SAMPLES = FALSE,
           AGGREGATE_BIN = TRUE,
-          MIN_FRAG_SIZE = 50,
+          MIN_FRAG_LENGHT_SIZE = 50,
           MAX_FRAG_SIZE =  250,
-          BIN_SIZE = 3000000,
+          BIN_SIZE_WGS = 3000000,
           AMPs = c("GAIN",  "LOSS")){
   
   # GET CNV REGIONS FROM PROGENETIX
@@ -602,10 +597,10 @@ getFeatureBasedOnCNV <- function(AllSample,
     #print(sample$FASTQ_Name)
     
  
-    pathFragm <- getPathFragm(sample, BIN_SIZE = BIN_SIZE)
+    pathFragm <- getPathFragm(sample, BIN_SIZE_WGS = BIN_SIZE_WGS)
     load(pathFragm)
     
-    pathMetrics <- getPathMetrics(sample, BIN_SIZE = BIN_SIZE)
+    pathMetrics <- getPathMetrics(sample, BIN_SIZE_WGS = BIN_SIZE_WGS)
     
     #load(sample$PathFragmentomics)
     region_GR <- getRegionBinSample(pathMetrics)
@@ -637,12 +632,12 @@ getFeatureBasedOnCNV <- function(AllSample,
     rm(resFEATUREs)
     
     ALT_res <- lapply(ALT_res, function(x){
-      x <- x[x$FragLen>= MIN_FRAG_SIZE & x$FragLen<=MAX_FRAG_SIZE,]
+      x <- x[x$FragLen>= MIN_FRAG_LENGHT_SIZE & x$FragLen<=MAX_FRAG_SIZE,]
     })
     
     mergeDF <- merge(ALT_res[[1]], ALT_res[[2]], by = "FragLen")
     
-    bin <- seq(MIN_FRAG_SIZE, MAX_FRAG_SIZE,SIZE_BP_AGGR)
+    bin <- seq(MIN_FRAG_LENGHT_SIZE, MAX_FRAG_SIZE,SIZE_BP_AGGR)
     
     SumBin_DF <- lapply(c(2,3), function(ind){
       
@@ -690,7 +685,7 @@ getFeatureBasedOnCNV <- function(AllSample,
   #Local Features
   resECDF_ALL <- parallel::mclapply(AllSample, function(sample){
     
-    pathMetrics <- getPathMetrics(sample, BIN_SIZE = BIN_SIZE)
+    pathMetrics <- getPathMetrics(sample, BIN_SIZE_WGS = BIN_SIZE_WGS)
     MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = pathMetrics, features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
     rownames(MTX) <- sample
     

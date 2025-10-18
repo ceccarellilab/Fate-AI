@@ -43,12 +43,8 @@ AllSample_df <- data.frame(
 )
 
 saveFragmBIN_fromBam(
-        PATH_INITIAL = PATH_INITIAL, 
         sample = AllSample_df$Sample[i], 
         bam = AllSample_df$pathBAM_WGS[i], 
-        NUM_THREADS = NUM_THREADS, 
-        PATH_SAMTOOLS = PATH_SAMTOOLS, 
-        FASTA_FILE = FASTA_FILE, 
         SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS)
     )
 ```
@@ -56,39 +52,11 @@ saveFragmBIN_fromBam(
 ### 4.3) Compute metrics in each bin (3Mb) [Fate-AI]
 ```
  saveMetricsBIN(
-        PATH_INITIAL = PATH_INITIAL, 
         sample = AllSample_df$Sample[i],
-        NUM_THREADS = NUM_THREADS
     )
 ```
 
-### 4.4) Identify DMRs from TCGA and Methylation Atlas [Fate-AI(+Meth)]
-```
-saveDMRs_fromTCGA(
-  PATH_INITIAL = PATH_INITIAL, 
-  CancerTypes = as.character(CLASS_TO_TCGA), 
-  NUM_THREADS = NUM_THREADS
-)
-```
-### 4.5) Generate BED Files for Top DMRs [Fate-AI(+Meth)]
-
-```
-saveBED_TopDMRs(
-  PATH_INITIAL = PATH_INITIAL, 
-  ClassTypes = c("Plasma", names(CLASS_TO_TCGA))
-)
-```
-
-### 4.6) Generate BED Files for Top DMRs [Fate-AI(+Meth)]
-
-```
-saveBED_TopDMRs(
-  PATH_INITIAL = PATH_INITIAL, 
-  ClassTypes = c("Plasma", names(CLASS_TO_TCGA))
-)
-```
-
-### 4.7) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
+### 4.4) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
 
 ```
 saveCoverageDMRs_fromBam(
@@ -104,7 +72,7 @@ saveCoverageDMRs_fromBam(
 ```
 
 
-###  4.8) Get features lpWGS [Fate-AI]
+###  4.5) Get features lpWGS [Fate-AI]
 ```
 feat_WGS <- getFeatureBasedOnCNV(
     AllSample_df$Sample, 
@@ -114,7 +82,7 @@ feat_WGS <- getFeatureBasedOnCNV(
 )
 ```
 
-###  4.9) Get features cfMeDIP [Fate-AI(+Meth)]
+###  4.6) Get features cfMeDIP [Fate-AI(+Meth)]
 ```
 feat_cfmedip <- getFeature_cfMeDIP(
     AllSample_df$Sample,
@@ -124,7 +92,7 @@ feat_cfmedip <- getFeature_cfMeDIP(
 
 ```
 
-### 5) Get prediction [Fate-AI(+Meth)]
+### 4.7) Get prediction [Fate-AI(+Meth)]
 
 ```
 feat_mtx <- cbind(feat_WGS, feat_cfmedip)
