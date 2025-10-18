@@ -42,7 +42,6 @@ saveFragmBIN_fromBam <- function(sample,
                                  bam,
                                  FASTA_FILE,
                                  PATH_SAMTOOLS,
-                                 NUM_THREADS = 40,
                                  SUFFIX_BAM = "_recal.bam",
                                  BIN_SIZE = 3000000,
                                  MAPQ = 30,
@@ -214,7 +213,6 @@ getPathMetrics <- function(sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "ME
 
 saveMetricsBIN <- function(sample,
                            BIN_SIZE = 3000000,
-                           NUM_THREADS = 40,
                            GC_CORR = TRUE,
                            OUTPUT_DIR = "output/WGS/",
                            FRAGM_DIR = "FRAGM_BIN/",
@@ -581,7 +579,6 @@ getCNV_Regions <- function(CLASS, FREQ_MANUAL = NULL, FREQ_MANUAL_GAIN = NULL, F
 
 getFeatureBasedOnCNV <- function(AllSample, 
           CLASS_CNV, 
-          NUM_THREADS = 30,
           FREQ = NULL, 
           MIN_SIZE_ALT = 1500000, 
           features_sel = c("mean", "ratio_NucCor_Nuc" , "ratio_NucCorChrom_Nuc", "coverage","coverageNucCore", "coverageChrom","coverageNuc"),   

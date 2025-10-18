@@ -11,7 +11,7 @@
 
 #### DMRs analysis from TCGA ####
 
-saveDMRs_fromTCGA <- function(CancerTypes = c("TCGA-BRCA", "TCGA-LUAD","TCGA-LUSC","TCGA-PRAD", "TCGA-BLCA", "TCGA-SKCM", "TCGA-MESO"), NUM_THREADS = 1, TCGA_DIR = "data/tcga/"){
+saveDMRs_fromTCGA <- function(CancerTypes = c("TCGA-BRCA", "TCGA-LUAD","TCGA-LUSC","TCGA-PRAD", "TCGA-BLCA", "TCGA-SKCM", "TCGA-MESO"), TCGA_DIR = "data/tcga/"){
 
   library(parallel)
 

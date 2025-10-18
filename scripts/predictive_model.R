@@ -8,7 +8,7 @@ normalizeMatrix <- function(feat_mtx, Cohort = ""){
   feat_mtx_norm
 }
 
-classifyMATRIX <- function(feat_mtx, classes = NULL, Cohort = "", class1 = "Healthy", class2 = "Cancer", testIND = NULL, method = "glmnet", NUM_THREADS = 20){
+classifyMATRIX <- function(feat_mtx, classes = NULL, Cohort = "", class1 = "Healthy", class2 = "Cancer", testIND = NULL, method = "glmnet"){
   
   feat_mtx <- normalizeMatrix(feat_mtx, Cohort)
   
@@ -56,10 +56,8 @@ classifyMATRIX <- function(feat_mtx, classes = NULL, Cohort = "", class1 = "Heal
   set.seed(1234)
   
   library(parallel) 
-  no_cores <- NUM_THREADS
-  
   library(doParallel)
-  cl <- makePSOCKcluster(no_cores)
+  cl <- makePSOCKcluster(NUM_THREADS)
   registerDoParallel(cl)
   
   library(caret)

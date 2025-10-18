@@ -1,9 +1,4 @@
-############################################# cfMeDIP-seq ##########################################################################
-
-# 1) Prepare the necessary cfMeDIP-seq files, identify DMRs, and generate BED files.
-
-#PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
-#lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
+###### setup_environment ######
 
 setup_environment <- function(config_path = "Config/config.yaml") {
   # Load libraries
@@ -19,7 +14,8 @@ setup_environment <- function(config_path = "Config/config.yaml") {
   list2env(config, envir = .GlobalEnv)
   
   # Load Fate-AI functions
-  lapply(as.list(list.files(paste0(config$PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(config$PATH_INITIAL, "scripts/",x)))
+  script_path <- paste0(config$PATH_INITIAL, "scripts/")
+  lapply(as.list(list.files(script_path, pattern = ".R")), function(x) source(paste0(script_path,x)))
   
   message("✅ Environment successfully initialized.")
 }
@@ -27,8 +23,20 @@ setup_environment <- function(config_path = "Config/config.yaml") {
 setwd("/home2/adefalco/Fate-AI/")
 setup_environment()
 
+
+
+
+############################################# cfMeDIP-seq ##########################################################################
+
+# 1) Prepare the necessary cfMeDIP-seq files, identify DMRs, and generate BED files.
+
+#PATH_INITIAL <- "/home2/adefalco/Fate-AI/"
+#lapply(as.list(list.files(paste0(PATH_INITIAL, "scripts/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "scripts/",x)))
+
+
+
 #Get DMRs from TCGA and Methylation Atlas Deconvolution
-saveDMRs_fromTCGA(CancerTypes = as.character(CLASS_TO_TCGA), NUM_THREADS = NUM_THREADS)
+saveDMRs_fromTCGA(CancerTypes = as.character(CLASS_TO_TCGA))
 
 #Generate BED files of DMRs
 saveBED_TopDMRs(ClassTypes = c("Plasma", names(CLASS_TO_TCGA)))
@@ -45,8 +53,7 @@ AllSample_df <- data.frame(Sample = "ICH20",
 lapply(1:nrow(AllSample_df), function(i){
   
   #Get coverage on DMRs
-  saveCoverageDMRs_fromBam(PATH_INITIAL = PATH_INITIAL, 
-                           sample = AllSample_df$Sample[i],
+  saveCoverageDMRs_fromBam(sample = AllSample_df$Sample[i],
                            bam = AllSample_df$pathBAM_MEDIP[i],
                            FASTA_FILE = FASTA_FILE,
                            PATH_SAMTOOLS = PATH_SAMTOOLS,
@@ -58,18 +65,14 @@ lapply(1:nrow(AllSample_df), function(i){
 lapply(1:nrow(AllSample_df), function(i){
 
 # Get fragment lenght in each bin (3MB)
-saveFragmBIN_fromBam(PATH_INITIAL = PATH_INITIAL, 
-                     sample = AllSample_df$Sample[i], 
+saveFragmBIN_fromBam(sample = AllSample_df$Sample[i], 
                      bam = AllSample_df$pathBAM_WGS[i], 
-                     NUM_THREADS = NUM_THREADS, 
                      PATH_SAMTOOLS = PATH_SAMTOOLS, 
                      FASTA_FILE = FASTA_FILE, 
                      SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS))
 
 # Get metrics each bin (3MB)  
-saveMetricsBIN(PATH_INITIAL = PATH_INITIAL, 
-                 sample = AllSample_df$Sample[i],
-                 NUM_THREADS = NUM_THREADS)
+saveMetricsBIN(sample = AllSample_df$Sample[i])
 
 })
 
@@ -77,7 +80,6 @@ saveMetricsBIN(PATH_INITIAL = PATH_INITIAL,
 
 METHOD_CLASSIFIER <- "glmnet"
 MODEL <- "Fate-AI(+Meth)"
-NUM_THREADS <- 10
 
 CLASS_CNV_METH <- "Urothelial"
 
@@ -85,16 +87,14 @@ if(MODEL == "Fate-AI"){
   
   #Features WGS
   feat_mtx <- getFeatureBasedOnCNV(AllSample$Sample, PATH_INITIAL = PATH_INITIAL, 
-                                   CLASS_CNV = names(CLASS_PARAMS_WGS)[1], 
-                                   NUM_THREADS = NUM_THREADS)
+                                   CLASS_CNV = names(CLASS_PARAMS_WGS)[1])
   METHOD_CLASSIFIER <- "glmnet"
   
 }else if(MODEL == "Fate-AI(+Meth)"){
   
   #Features WGS
   feat_WGS <- getFeatureBasedOnCNV(AllSample_df$Sample, PATH_INITIAL = PATH_INITIAL, 
-                                   CLASS_CNV = AllSample_df$Class[1], 
-                                   NUM_THREADS = NUM_THREADS)
+                                   CLASS_CNV = AllSample_df$Class[1])
   #Features cfMeDIP-seq
   feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$Sample,
                                      PATH_INITIAL = PATH_INITIAL,
