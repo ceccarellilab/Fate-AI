@@ -244,106 +244,111 @@ path_fragm_data <- getPathFragm(sample)
 
 path_output <- getPathMetrics(sample)
 
-#path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE_WGS),"_DF.RData")
+if(!file.exists(path_output)){
 
-print(sample)
-
-load(path_fragm_data)
-
-resFEATUREs <- resFEATUREs[unlist(lapply(resFEATUREs, function(x) !is.null(x$region_weights)))]
-
-df <- data.frame(row.names = names(resFEATUREs))
-
-df$mean <- NA
-df$coverage <- NA
-df$coverageNucCore <- NA 
-df$coverageChrom <- NA
-df$coverageNuc <- NA
-
-for(i in 1:length(resFEATUREs)){
+  #path_output <- paste0(dirSave,sample, "_fragm_bin_",as.integer(BIN_SIZE_WGS),"_DF.RData")
+  print(sample)
   
-  dff_all <- resFEATUREs[[i]]
+  load(path_fragm_data)
   
-  dff <- dff_all$region_weights
-  if(nrow(dff)>0){
+  resFEATUREs <- resFEATUREs[unlist(lapply(resFEATUREs, function(x) !is.null(x$region_weights)))]
+  
+  df <- data.frame(row.names = names(resFEATUREs))
+  
+  df$mean <- NA
+  df$coverage <- NA
+  df$coverageNucCore <- NA 
+  df$coverageChrom <- NA
+  df$coverageNuc <- NA
+  
+  for(i in 1:length(resFEATUREs)){
     
-    if(GC_CORR){
-      fragment_lengths <-  rep(dff$Frag_len,dff$sum_GC_weight)
-    }else{
-      fragment_lengths <-  rep(dff$Frag_len,dff$num_frag)
+    dff_all <- resFEATUREs[[i]]
+    
+    dff <- dff_all$region_weights
+    if(nrow(dff)>0){
+      
+      if(GC_CORR){
+        fragment_lengths <-  rep(dff$Frag_len,dff$sum_GC_weight)
+      }else{
+        fragment_lengths <-  rep(dff$Frag_len,dff$num_frag)
+      }
+      
+      if(length(fragment_lengths)>0){
+        
+        df$mean[i] = mean(fragment_lengths)
+        df$coverage[i] = sum(fragment_lengths)
+        df$coverageNucCore[i] = coverage_nucleosome_core(fragment_lengths)
+        df$coverageChrom[i] = coverage_chromatosome(fragment_lengths)
+        df$coverageNuc[i] = coverage_nucleosome(fragment_lengths)
+        
+      }
     }
     
-    if(length(fragment_lengths)>0){
-      
-      df$mean[i] = mean(fragment_lengths)
-      df$coverage[i] = sum(fragment_lengths)
-      df$coverageNucCore[i] = coverage_nucleosome_core(fragment_lengths)
-      df$coverageChrom[i] = coverage_chromatosome(fragment_lengths)
-      df$coverageNuc[i] = coverage_nucleosome(fragment_lengths)
-      
-    }
   }
   
+  save(df, file = path_output)
 }
 
-save(df, file = path_output)
+path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, MOTIF = TRUE)
 
-path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, BIN_SIZE_WGS, MOTIF = TRUE)
-
-df <- data.frame(row.names = names(resFEATUREs))
-
-df$CCCA <- NA
-df$CCAG <- NA
-df$CCTG <- NA
-df$TAAA <- NA
-df$AAAA <- NA
-df$TTTT <- NA
-
-for(i in 1:length(resFEATUREs)){
+if(!file.exists(path_output)){
   
-  dff_all <- resFEATUREs[[i]]
+  df <- data.frame(row.names = names(resFEATUREs))
   
-  dff <- dff_all$region_motifs
+  df$CCCA <- NA
+  df$CCAG <- NA
+  df$CCTG <- NA
+  df$TAAA <- NA
+  df$AAAA <- NA
+  df$TTTT <- NA
   
-  resDff <- dff
-  
-  endMotif_all <- read.csv(paste0(PATH_INITIAL,"data/end-motif.csv"), sep = ";", header = FALSE)
-  
-  resDff <- resDff[resDff$Motif %in% endMotif_all,]
-  
-  if(sum(!endMotif_all %in% resDff$Motif)>0){
-    notMot <- endMotif_all[!endMotif_all %in% resDff$Motif]
-    resDffnotMot <- data.frame(Motif = as.integer(notMot), sum_GC_weight = 0 , Counts = 0)  
-    resDff <- rbind(resDff, resDffnotMot)
-  }
-  
-  if(!is.null(resDff)){
-    library(dplyr)
+  for(i in 1:length(resFEATUREs)){
     
-    if(GC_CORR){
-      resDff <- resDff %>%
-        group_by(Motif) %>%
-        summarise(Counts = sum(sum_GC_weight))
-      resDff <- as.data.frame(resDff)
-    }else{
-      resDff <- resDff %>%
-        group_by(Motif) %>%
-        summarise(Counts = sum(Counts))
-      resDff <- as.data.frame(resDff)
+    dff_all <- resFEATUREs[[i]]
+    
+    dff <- dff_all$region_motifs
+    
+    resDff <- dff
+    
+    endMotif_all <- read.csv(paste0(PATH_INITIAL,"data/end-motif.csv"), sep = ";", header = FALSE)
+    
+    resDff <- resDff[resDff$Motif %in% endMotif_all,]
+    
+    if(sum(!endMotif_all %in% resDff$Motif)>0){
+      notMot <- endMotif_all[!endMotif_all %in% resDff$Motif]
+      resDffnotMot <- data.frame(Motif = as.integer(notMot), sum_GC_weight = 0 , Counts = 0)  
+      resDff <- rbind(resDff, resDffnotMot)
     }
     
-    resDff$Density <- (resDff$Counts/sum(resDff$Counts))*100
+    if(!is.null(resDff)){
+      library(dplyr)
+      
+      if(GC_CORR){
+        resDff <- resDff %>%
+          group_by(Motif) %>%
+          summarise(Counts = sum(sum_GC_weight))
+        resDff <- as.data.frame(resDff)
+      }else{
+        resDff <- resDff %>%
+          group_by(Motif) %>%
+          summarise(Counts = sum(Counts))
+        resDff <- as.data.frame(resDff)
+      }
+      
+      resDff$Density <- (resDff$Counts/sum(resDff$Counts))*100
+    }
+    
+    df$CCCA[i] = resDff[resDff$Motif=="CCCA",]$Density
+    df$CCAG[i] = resDff[resDff$Motif=="CCAG",]$Density
+    df$CCTG[i] = resDff[resDff$Motif=="CCTG",]$Density
+    df$TAAA[i] = resDff[resDff$Motif=="TAAA",]$Density
+    df$AAAA[i] = resDff[resDff$Motif=="AAAA",]$Density
+    df$TTTT[i] = resDff[resDff$Motif=="TTTT",]$Density
   }
   
-  df$CCCA[i] = resDff[resDff$Motif=="CCCA",]$Density
-  df$CCAG[i] = resDff[resDff$Motif=="CCAG",]$Density
-  df$CCTG[i] = resDff[resDff$Motif=="CCTG",]$Density
-  df$TAAA[i] = resDff[resDff$Motif=="TAAA",]$Density
-  df$AAAA[i] = resDff[resDff$Motif=="AAAA",]$Density
-  df$TTTT[i] = resDff[resDff$Motif=="TTTT",]$Density
+  save(df, file = path_output)
 }
-
-save(df, file = path_output)
 
 }
 
