@@ -36,11 +36,15 @@ getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_
   path_output
 }
 
+#sample = AllSample_df$Sample[i]
+#bam = AllSample_df$pathBAM_WGS[i]
+#SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS)
+                     
+
 
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
 saveFragmBIN_fromBam <- function(sample, 
                                  bam,
-                                 FASTA_FILE,
                                  SUFFIX_BAM = "_recal.bam",
                                  PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output"){
 
