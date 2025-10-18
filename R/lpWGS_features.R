@@ -51,6 +51,8 @@ saveFragmBIN_fromBam <- function(sample,
   path_output <- getPathFragm(sample)
   print(path_output)
   
+  if(!file.exists(path_output)){
+  
   BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
   
   library(parallel)
@@ -189,6 +191,8 @@ saveFragmBIN_fromBam <- function(sample,
   names(resFEATUREs) <- regions
   
   save(resFEATUREs, file = path_output)
+  
+  }
 
 }
 
@@ -290,7 +294,7 @@ if(!file.exists(path_output)){
   save(df, file = path_output)
 }
 
-path_output <- getPathMetrics(sample, OUTPUT_DIR, METRICS_DIR, MOTIF = TRUE)
+path_output <- getPathMetrics(sample, MOTIF = TRUE)
 
 if(!file.exists(path_output)){
   
