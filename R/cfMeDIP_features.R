@@ -313,8 +313,7 @@ merge_Samples_cfMEDIP_Counts <- function(DMR_COUNT_DIR = "output/cfMeDIP/"){
 ##### Get features cfMedip  ####
 
 getFeature_cfMeDIP <- function(AllSample, 
-                               CLASS, 
-                               DMR_COUNT_DIR = "output/cfMeDIP/"){
+                               CLASS){
   
   
   ClassTypes = c("Plasma", CLASS)
@@ -323,7 +322,7 @@ getFeature_cfMeDIP <- function(AllSample,
   #if(!file.exists(DMR_COUNT_MERGE_PATH)) merge_Samples_cfMEDIP_Counts(PATH_INITIAL, N_TOP_DMRs = N_TOP_DMRs, DMR_COUNT_DIR = DMR_COUNT_DIR)
   #load(DMR_COUNT_MERGE_PATH)
   
-  COUNTS_samples_merge <- merge_Samples_cfMEDIP_Counts(N_TOP_DMRs = N_TOP_DMRs, DMR_COUNT_DIR = DMR_COUNT_DIR)
+  COUNTS_samples_merge <- merge_Samples_cfMEDIP_Counts()
   
   COUNTS_samples_merge[COUNTS_samples_merge<FILTER_COUNT] <- 0
   

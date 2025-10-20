@@ -44,8 +44,7 @@ AllSample_df <- data.frame(
 
 saveFragmBIN_fromBam(
         sample = AllSample_df$Sample[i], 
-        bam = AllSample_df$pathBAM_WGS[i], 
-        SUFFIX_BAM = gsub(".bam","", SUFFIX_BAM_WGS)
+        bam = AllSample_df$pathBAM_WGS[i]
     )
 ```
 
@@ -60,11 +59,8 @@ saveFragmBIN_fromBam(
 
 ```
 saveCoverageDMRs_fromBam(
-    PATH_INITIAL = PATH_INITIAL, 
     sample = AllSample_df$Sample[i],
     bam = AllSample_df$pathBAM_MEDIP[i],
-    FASTA_FILE = FASTA_FILE,
-    PATH_SAMTOOLS = PATH_SAMTOOLS,
     ClassTypes = c(
       AllSample_df$Class[i]
     )
@@ -76,9 +72,7 @@ saveCoverageDMRs_fromBam(
 ```
 feat_WGS <- getFeatureBasedOnCNV(
     AllSample_df$Sample, 
-    PATH_INITIAL = PATH_INITIAL, 
-    CLASS_CNV = AllSample_df$Class[1], 
-    NUM_THREADS = NUM_THREADS
+    CLASS_CNV = AllSample_df$Class[1]
 )
 ```
 
@@ -86,7 +80,6 @@ feat_WGS <- getFeatureBasedOnCNV(
 ```
 feat_cfmedip <- getFeature_cfMeDIP(
     AllSample_df$Sample,
-    PATH_INITIAL = PATH_INITIAL,
     CLASS = AllSample_df$Class[1]
 )
 

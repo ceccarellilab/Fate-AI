@@ -45,7 +45,6 @@ getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
 saveFragmBIN_fromBam <- function(sample, 
                                  bam,
-                                 SUFFIX_BAM = "_recal.bam",
                                  PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output"){
 
   path_output <- getPathFragm(sample)
@@ -58,6 +57,7 @@ saveFragmBIN_fromBam <- function(sample,
   library(parallel)
   library(dplyr)
   
+  SUFFIX_BAM <- gsub(".bam","", SUFFIX_BAM_WGS)
   GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample, SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
   
   tmp_dir <- "/temp"
@@ -604,10 +604,10 @@ getFeatureBasedOnCNV <- function(AllSample,
     #print(sample$FASTQ_Name)
     
  
-    pathFragm <- getPathFragm(sample, BIN_SIZE_WGS = BIN_SIZE_WGS)
+    pathFragm <- getPathFragm(sample)
     load(pathFragm)
     
-    pathMetrics <- getPathMetrics(sample, BIN_SIZE_WGS = BIN_SIZE_WGS)
+    pathMetrics <- getPathMetrics(sample)
     
     #load(sample$PathFragmentomics)
     region_GR <- getRegionBinSample(pathMetrics)
@@ -692,7 +692,7 @@ getFeatureBasedOnCNV <- function(AllSample,
   #Local Features
   resECDF_ALL <- parallel::mclapply(AllSample, function(sample){
     
-    pathMetrics <- getPathMetrics(sample, BIN_SIZE_WGS = BIN_SIZE_WGS)
+    pathMetrics <- getPathMetrics(sample)
     MTX <- getMtxDiff_eCDF_Features_SINGLE_SAMP(CNV_regions, pathMetrics = pathMetrics, features_sel = features_sel, MIN_SIZE_ALT = MIN_SIZE_ALT)
     rownames(MTX) <- sample
     
