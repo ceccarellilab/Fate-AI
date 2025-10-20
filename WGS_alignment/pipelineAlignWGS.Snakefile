@@ -263,7 +263,7 @@ rule install_GCparagon:
 		cd {params.my_basedir}
 		"""
 
-rule 2bit:
+rule get_twobit:
 	output:
 		str(config['my_basedir']) + "/acc_files/genome2bit/hg38.2bit"
 	threads: config['NUM_THREADS']
@@ -272,14 +272,12 @@ rule 2bit:
 	params:
 		fastapath = config['FASTA'],
 		my_basedir = config['my_basedir']
-  conda:
+	conda:
 		"conda_env/GCparagon_py3.10_env.yml"  
 	log:
-		"{sample}.log"
+		"get_twobit.log"
 	shell:
-		"""
-    faToTwoBit {params.fastapath} {params.my_basedir}/acc_files/genome2bit/hg38.2bit
-		"""
+		"faToTwoBit {params.fastapath} {params.my_basedir}/acc_files/genome2bit/hg38.2bit"
     	
 rule GC_corr:
 	input:
@@ -466,5 +464,3 @@ rule multiqc_all:
 		"logs/multiqc.log"
 	wrapper:
 		"v1.23.5/bio/multiqc"
-
-
