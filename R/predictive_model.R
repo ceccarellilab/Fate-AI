@@ -1,3 +1,7 @@
+minMaxNorm <- function(x, min,max){
+  (x - min) / (max - min)
+}
+
 normalizeMatrix <- function(feat_mtx, Cohort = ""){
   NUM_FEATURES <- ncol(feat_mtx)
   feat_mtx$Cohort = Cohort
