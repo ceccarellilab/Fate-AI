@@ -263,9 +263,28 @@ rule install_GCparagon:
 		cd {params.my_basedir}
 		"""
 
+rule 2bit:
+	output:
+		str(config['my_basedir']) + "/acc_files/genome2bit/hg38.2bit"
+	threads: config['NUM_THREADS']
+	resources:
+		mem_mb=102400 
+	params:
+		fastapath = config['FASTA'],
+		my_basedir = config['my_basedir']
+  conda:
+		"conda_env/GCparagon_py3.10_env.yml"  
+	log:
+		"{sample}.log"
+	shell:
+		"""
+    faToTwoBit {params.fastapath} {params.my_basedir}/acc_files/genome2bit/hg38.2bit
+		"""
+    	
 rule GC_corr:
 	input:
 		str(config['my_basedir']) + "/GCparagon/setup.py",
+		str(config['my_basedir']) + "/acc_files/genome2bit/hg38.2bit",
 		str(config['PATH_BAM']) + "{sample}"+ str(config['BAM_SUFFIX'])
 	output:
 		config['WORKPATH'] + "GC_correction_output/{sample}"+SUFFIX_CLEAR+"/{sample}"+SUFFIX_CLEAR +".W_gc_outliers_removed_smoothed.heatmap.png"
