@@ -78,10 +78,10 @@ feat_mtx <- normalizeMatrix(feat_mtx)
 TEST_INDEX <- NULL
 
 if(is.null(TEST_INDEX)){
-  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, method = METHOD_CLASSIFIER)
+  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_df$Class, class1 = "Healthy", class2 = CLASS, method = METHOD_CLASSIFIER)
   TYPE = "Matched-cohort"
 }else{
-  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_SUB$Class, class1 = "Healthy", class2 = CLASS, testIND = TEST_INDEX, method = METHOD_CLASSIFIER)
+  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_df$Class, class1 = "Healthy", class2 = CLASS, testIND = TEST_INDEX, method = METHOD_CLASSIFIER)
   TYPE = "Cross-cohort"
 }
 
