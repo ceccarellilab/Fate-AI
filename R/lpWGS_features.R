@@ -61,7 +61,7 @@ saveFragmBIN_fromBam <- function(sample,
     if(is.null(BED_FILE_SPECIFIC)){
       
       BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
-      if(!file.exists(BEDFILE)) system(paste0(BED_TOOLS_DIR, " makewindows -g ",PATH_INITIAL, "acc_files/GenomeSizeHg38.txt -w ", BIN_SIZE_WGS, " -s ", BIN_SIZE_WGS+1, " > /data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
+      if(!file.exists(BEDFILE)) system(paste0(BED_TOOLS_DIR, " makewindows -g ",PATH_INITIAL, "data/GenomeSizeHg38.txt -w ", BIN_SIZE_WGS, " -s ", BIN_SIZE_WGS+1, " > /data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
                                        
     }else{
       BEDFILE <- BED_FILE_SPECIFIC
