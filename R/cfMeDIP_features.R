@@ -81,7 +81,7 @@ saveDMRs_fromTCGA <- function(CancerTypes = c("TCGA-BRCA", "TCGA-LUAD","TCGA-LUS
 
 ######## Select top hypermethylated from TCGA and MethAtlas ########
 
-saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma"), TCGA_DIR = "data/tcga/", BED_DIR = "data/bed_dmrs/"){
+saveBED_TopDMRs <- function(ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesothelioma", "Plasma"), TCGA_DIR = "data/tcga/", BED_DIR = "data/bed_dmrs/"){
 
   #Forward = Plus = (+) = Positive = Watson
   #Reverse = Minus = (-) = Negative = Crick

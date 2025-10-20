@@ -28,7 +28,7 @@ lapply(1:nrow(AllSample_df), function(i){
   #Get coverage on DMRs
   saveCoverageDMRs_fromBam(sample = AllSample_df$Sample[i],
                            bam = AllSample_df$pathBAM_MEDIP[i],
-                           ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesotelioma", "Plasma", "Lung_SHARED"))
+                           ClassTypes = c("Colon", "Lung_LUAD", "Lung_LUSC","Breast", "Prostate","Urothelial","Melanoma", "Mesothelioma", "Plasma", "Lung_SHARED"))
 })
 
 ############################################# lpWGS ##########################################################################

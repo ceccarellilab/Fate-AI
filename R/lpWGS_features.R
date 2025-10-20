@@ -23,6 +23,11 @@ saveCNV_fromProgenetix <- function(NCIT_CODE = "C3224"){
 }
 
 getDirFragm <- function(OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_BIN/"){
+  dirWGS<- paste0(PATH_INITIAL, OUTPUT_DIR)
+  if (!dir.exists(dirWGS)) {
+    dir.create(dirWGS)
+  }
+
   dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
   if (!dir.exists(dirSave)) {
     dir.create(dirSave)
@@ -199,6 +204,11 @@ saveFragmBIN_fromBam <- function(sample,
 ##### Compute metrics in 3Mb region ####
 
 getDirMetrics <- function(OUTPUT_DIR = "output/WGS/", METRICS_DIR = "METRICS_BIN/"){
+  dirWGS<- paste0(PATH_INITIAL, OUTPUT_DIR)
+  if (!dir.exists(dirWGS)) {
+    dir.create(dirWGS)
+  }
+
   dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
   if (!dir.exists(dirSave)) {
     dir.create(dirSave)

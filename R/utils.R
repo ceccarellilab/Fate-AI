@@ -13,6 +13,12 @@ setup_environment <- function(config_path = "Config/config.yaml") {
   list2env(config, envir = .GlobalEnv)
   message("Config file loaded")
   
+  # Output dir
+  OUT_DIR <- paste0(PATH_INITIAL, "output/")
+  if (!dir.exists(OUT_DIR)) {
+      dir.create(OUT_DIR)
+    }
+
   # Load Fate-AI functions
   lapply(as.list(list.files(paste0(PATH_INITIAL, "R/"), pattern = ".R")), function(x) source(paste0(PATH_INITIAL, "R/",x)))
   message("Fate-AI functions loaded")

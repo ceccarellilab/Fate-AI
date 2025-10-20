@@ -1,6 +1,6 @@
 FASTA_FILE: "/storage/qnap_vol1/bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
 PATH_SAMTOOLS: "/home/adefalco/singleCell/cellRank/samtools-1.11/samtools"
-NUM_THREADS: 10
+NUM_THREADS: 48
 PATH_INITIAL: "/home2/adefalco/Fate-AI/"
 
 CLASS_TO_TCGA:
