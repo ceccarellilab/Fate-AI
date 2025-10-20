@@ -14,9 +14,11 @@ if not os.path.isdir(config['WORKPATH']):
 
 # If in the config PATH_BAM is empty (start from FASTQ)
 if not config.get("PATH_BAM"):
+	ALIGN = True
 	config['workdir'] = config['WORKPATH'] + "BAM" + "/"
 	config['PATH_BAM'] = config['workdir']
 else:
+	ALIGN = False
 	config['workdir'] = config['PATH_BAM']
 
 if not os.path.isdir(config['workdir']): 
@@ -134,11 +136,13 @@ def get_qc_corr(wildcards):
   ls = get_fileOutputName2(suffix_clear+".W_gc_outliers_removed_smoothed.heatmap.png", config['WORKPATH']+"GC_correction_output/")
   return ls
 
+print(config['PATH_BAM'])
+print(get_fileOutputName(""))
 print(get_qc_corr(""))
 
 ##### ALIGNMENT #######
 
-if not config.get("PATH_BAM"):
+if ALIGN:
 	rule all:
 		input:
 			get_baseRecalibration,
