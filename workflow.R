@@ -55,33 +55,28 @@ if(MODEL == "Fate-AI"){
   
   #Features WGS
   feat_mtx <- getFeatureBasedOnCNV(AllSample$Sample, 
-                                   CLASS_CNV = names(CLASS_PARAMS_WGS)[1])
-  METHOD_CLASSIFIER <- "glmnet"
+                                   CLASS_CNV = CLASS_CNV_METH)
   
 }else if(MODEL == "Fate-AI(+Meth)"){
   
   #Features WGS
   feat_WGS <- getFeatureBasedOnCNV(AllSample_df$Sample, 
-                                   CLASS_CNV = AllSample_df$Class[1])
+                                   CLASS_CNV = CLASS_CNV_METH)
   #Features cfMeDIP-seq
   feat_cfmedip <- getFeature_cfMeDIP(AllSample_df$Sample,
-                                     CLASS = AllSample_df$Class)
+                                     CLASS = CLASS_CNV_METH)
   
   feat_mtx <- cbind(feat_WGS, feat_cfmedip)
 
 }
 
-METHOD_CLASSIFIER <- "glmnet"
-
-feat_mtx <- normalizeMatrix(feat_mtx)
-
 TEST_INDEX <- NULL
 
 if(is.null(TEST_INDEX)){
-  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_df$Class, class1 = "Healthy", class2 = CLASS, method = METHOD_CLASSIFIER)
+  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_df$Class, class1 = "Healthy", class2 = CLASS_CNV_METH, method = METHOD_CLASSIFIER)
   TYPE = "Matched-cohort"
 }else{
-  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_df$Class, class1 = "Healthy", class2 = CLASS, testIND = TEST_INDEX, method = METHOD_CLASSIFIER)
+  prediction <- classifyMATRIX(feat_mtx, classes = AllSample_df$Class, class1 = "Healthy", class2 = CLASS_CNV_METH, testIND = TEST_INDEX, method = METHOD_CLASSIFIER)
   TYPE = "Cross-cohort"
 }
 

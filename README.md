@@ -96,7 +96,7 @@ if(is.null(TEST_INDEX)){ #"Matched-cohort"
         feat_mtx, 
         classes = AllSample_SUB$Class, 
         class1 = "Healthy", 
-        class2 = CLASS, 
+        class2 = "Cancer", 
         method = METHOD_CLASSIFIER
     )
 } else { #"Cross-cohort"
@@ -104,7 +104,7 @@ if(is.null(TEST_INDEX)){ #"Matched-cohort"
         feat_mtx, 
         classes = AllSample_SUB$Class, 
         class1 = "Healthy", 
-        class2 = CLASS, 
+        class2 = "Cancer", 
         testIND = TEST_INDEX, 
         method = METHOD_CLASSIFIER
     )
