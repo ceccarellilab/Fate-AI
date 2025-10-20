@@ -134,21 +134,15 @@ def get_qc_corr(wildcards):
   ls = get_fileOutputName2(suffix_clear+".W_gc_outliers_removed_smoothed.heatmap.png", config['WORKPATH']+"GC_correction_output/")
   return ls
 
-def get_Fragmentomics_file(wildcards):
-	ls = get_fileOutputName("_motif_bin_"+ str(config['BIN_SIZE']) + "_DF.RData", config['WORKPATH']+"Fragmentomics_features/")
-	#ls = [k for k in ls if "LB-" in k]
-	#ls = [k for k in ls if "IWI" in k]
-	return ls
-
-print(get_Fragmentomics_file(""))
-
+print(get_qc_corr(""))
 
 ##### ALIGNMENT #######
 
 if not config.get("PATH_BAM"):
 	rule all:
 		input:
-			get_baseRecalibration
+			get_baseRecalibration,
+			get_qc_corr
 			#get_Fragmentomics_file
 
 	# 1 Mapping reads with BWA-MEM, sorting for normal sample
@@ -245,7 +239,7 @@ else:
 	print("Start From BAM")
 	rule all:
 		input:
-			get_Fragmentomics_file
+			get_qc_corr
 
 SUFFIX_CLEAR = re.sub(".bam", "", config['BAM_SUFFIX'])
 
@@ -291,6 +285,8 @@ rule GC_corr:
 		"{sample}.log"
 	shell:
 		"python {params.my_basedir}/GCparagon/src/GCparagon/correct_GC_bias.py --bam {params.PATH_BAM}/{wildcards.sample}{params.SUFFIX_BAM} -rtb {params.my_basedir}/acc_files/genome2bit/hg38.2bit -rgcd {params.my_basedir}/GCparagon/accessory_files/hg38_reference_GC_content_distribution.tsv -c {params.my_basedir}/GCparagon/accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed -o {params.OUTPUT_DIR}GC_correction_output/ --threads {params.nthreads}"
+
+	
 
 ##### VARIANT CALLING DNA SCOPE #######
 
@@ -452,85 +448,4 @@ rule multiqc_all:
 	wrapper:
 		"v1.23.5/bio/multiqc"
 
-
-##### FRAGMENTOMICS #######
-
-rule all_Fragmentomics:
-	input:
-		get_Fragmentomics_file
-
-rule get_bin_bed_file:
-	input:
-		str(config['my_basedir'])+"/acc_files/GenomeSizeHg38.txt"
-	output:
-		str(config['my_basedir'])+"/acc_files/genome_{bin_size}.bed"
-	threads: 1
-	resources:
-		mem_mb=102400,
-		time="12:00:00" 
-	params:
-		bed_tools = config['BED_TOOLS_DIR'],
-		BIN_SIZE = config['BIN_SIZE'],
-		BIN_SIZE_1 = config['BIN_SIZE']+1,
-		my_basedir = config['my_basedir']
-	shell:
-		"""
-		cd {params.my_basedir}
-		{params.bed_tools} makewindows -g acc_files/GenomeSizeHg38.txt -w {params.BIN_SIZE} -s {params.BIN_SIZE_1} > acc_files/genome_{params.BIN_SIZE}.bed
-		"""
-
-
-rule get_Fragmentomics_fragm_motif:
-	input:
-		str(config['my_basedir'])+"/acc_files/genome_{bin_size}.bed",
-		"{sample}"+str(config['BAM_SUFFIX']),
-		config['WORKPATH'] + "GC_correction_output/{sample}"+SUFFIX_CLEAR+"/{sample}"+SUFFIX_CLEAR +".W_gc_outliers_removed_smoothed.heatmap.png"
-	output:
-		config['WORKPATH'] + "Fragmentomics_output/{sample}_{bin_size}_res_frag_motif.RData"
-	threads: config['NUM_THREADS']
-	resources:
-		mem_mb=102400,
-		time="12:00:00" 
-	params:
-		my_basedir = config['my_basedir'],
-		suffix_bam = config['BAM_SUFFIX'],
-		path_bam = config['PATH_BAM'],
-		output_dir = config['WORKPATH'],
-		NUM_THREADS= config['NUM_THREADS'],
-		MAPQ = config['MAPQ'],
-		BIN_SIZE = config['BIN_SIZE'],
-		fastapath = config['FASTA'],
-		samtoolspath = config['SAMTOOLS_DIR'],
-		MAX_FRAG_LENGHT = config['MAX_FRAG_LENGHT'],
-		SUFFIX_BAM = config['BAM_SUFFIX']
-	log:
-		"logs/fastqc/{sample}_{bin_size}.log"
-	conda:
-		"conda_env/envR.yml"
-	shell:
-		"Rscript {params.my_basedir}/Script/Fragmentomics_Extraction.R {wildcards.sample} {params.path_bam}/{wildcards.sample}{params.suffix_bam} {params.output_dir}/Fragmentomics_output/ {params.BIN_SIZE} {params.NUM_THREADS} {params.fastapath} {params.samtoolspath} {params.MAPQ} {params.MAX_FRAG_LENGHT} {params.SUFFIX_BAM}"
-
-print(config['WORKPATH'])
-
-rule get_Fragmentomics_features:
-	input:
-		config['WORKPATH'] + "Fragmentomics_output/{sample}_{bin_size}_res_frag_motif.RData"
-	output:
-		config['WORKPATH'] + "Fragmentomics_features/{sample}_fragm_bin_{bin_size}_DF.RData",
-		config['WORKPATH'] + "Fragmentomics_features/{sample}_motif_bin_{bin_size}_DF.RData"
-	threads: config['NUM_THREADS']
-	resources:
-		mem_mb=102400,
-		time="12:00:00" 
-	params:
-		my_basedir = config['my_basedir'],
-		output_dir = config['WORKPATH'],
-		NUM_THREADS= config['NUM_THREADS'],
-		BIN_SIZE = config['BIN_SIZE']
-	log:
-		"logs/fastqc/{sample}_{bin_size}.log"
-	conda:
-		"conda_env/envR.yml"  
-	shell:
-		"Rscript {params.my_basedir}/Script/Fragmentomics_2D_Profile.R {wildcards.sample} {params.output_dir}/Fragmentomics_output/ {params.output_dir}/Fragmentomics_features/ {params.BIN_SIZE} {params.NUM_THREADS} {params.my_basedir}"
 

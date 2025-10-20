@@ -35,11 +35,7 @@ lapply(1:nrow(AllSample_df), function(i){
 
 lapply(1:nrow(AllSample_df), function(i){
 
-# Get fragment lenght in each bin (3MB)
-saveFragmBIN_fromBam(sample = AllSample_df$Sample[i], 
-                     bam = AllSample_df$pathBAM_WGS[i])
-
-# Get metrics each bin (3MB)  
+# Get fragment lenght and metrics each bin (3MB)  
 saveMetricsBIN(sample = AllSample_df$Sample[i])
 
 })

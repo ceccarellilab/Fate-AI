@@ -23,6 +23,7 @@ Follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.c
 | `PATH_INITIAL` | string | Root directory of the pipeline project. | `"Fate-AI/"` |
 | `FASTA_FILE` | string | Path to the human genome FASTA file (hg38). | `"bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"` |
 | `PATH_SAMTOOLS` | string | Path to the `samtools` binary. | `"bin/samtools"` |
+| `BED_TOOLS_DIR` | Path to `bedtools` binary | `"bcbio/anaconda/bin/bedtools"` |
 | `NUM_THREADS` | integer | Number of threads for parallel processing. | `10` |
 
 ### Primary Tumor Mapping
@@ -32,7 +33,7 @@ Follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.c
 | `CLASS_PARAMS_WGS` | list | Parameters for each cancer type: CNV frequency (`freq`) and NCIT code (`NCIT`). [Fate-AI]  | `Colon: freq: 25 NCIT: "C2955"` |
 | `CLASS_TO_TCGA` | list | Maps cancer type to TCGA identifiers. [Fate-AI(+Meth)] | `Urothelial : "TCGA_BLCA"` |
 
-### 4.2) Compute fragment lengths in each bin (3Mb) [Fate-AI]
+### 4.2) Compute fragment lengths and metrics in each bin (3Mb) [Fate-AI]
 ```
 AllSample_df <- data.frame(
   Sample = "ICH20", 
@@ -42,20 +43,13 @@ AllSample_df <- data.frame(
   row.names = "ICH20"
 )
 
-saveFragmBIN_fromBam(
+saveMetricsBIN(
         sample = AllSample_df$Sample[i], 
         bam = AllSample_df$pathBAM_WGS[i]
     )
 ```
 
-### 4.3) Compute metrics in each bin (3Mb) [Fate-AI]
-```
- saveMetricsBIN(
-        sample = AllSample_df$Sample[i],
-    )
-```
-
-### 4.4) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
+### 4.3) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
 
 ```
 saveCoverageDMRs_fromBam(
@@ -68,7 +62,7 @@ saveCoverageDMRs_fromBam(
 ```
 
 
-###  4.5) Get features lpWGS [Fate-AI]
+###  4.4) Get features lpWGS [Fate-AI]
 ```
 feat_WGS <- getFeatureBasedOnCNV(
     AllSample_df$Sample, 
@@ -76,7 +70,7 @@ feat_WGS <- getFeatureBasedOnCNV(
 )
 ```
 
-###  4.6) Get features cfMeDIP [Fate-AI(+Meth)]
+###  4.5) Get features cfMeDIP [Fate-AI(+Meth)]
 ```
 feat_cfmedip <- getFeature_cfMeDIP(
     AllSample_df$Sample,
@@ -85,7 +79,7 @@ feat_cfmedip <- getFeature_cfMeDIP(
 
 ```
 
-### 4.7) Get prediction [Fate-AI(+Meth)]
+### 4.6) Get prediction [Fate-AI(+Meth)]
 
 ```
 feat_mtx <- cbind(feat_WGS, feat_cfmedip)

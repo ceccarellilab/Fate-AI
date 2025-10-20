@@ -3,8 +3,8 @@
 The entire pipeline is implemented using Snakemake and is executed on the cluster using Slurm.
 
 The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM files.
-- Starting from ***FASTQ***: allows end-to-end processing, including alignment, quality filtering, deduplication and recalibration using Sentieon.
-- Starting from ***BAM***: files skips the alignment step and proceeds directly to GC correction and fragment analysis.
+- Starting from ***FASTQ***: allows end-to-end processing, including alignment, quality filtering, deduplication and recalibration using Sentieon, and finally GC correction.
+- Starting from ***BAM***: files skips the alignment step and proceeds directly to GC correction.
 
 ## 1) Set parameters in Config File (Config/ENV_USER_OPTIONS.yaml): 
 
@@ -70,7 +70,7 @@ The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM
 | `BGZIP_DIR` | Path to `bgzip` binary | `"bcbio/anaconda/bin/bgzip"` |
 | `SNPEFF_DIR` | Path to `snpEff` binary | `"bcbio/anaconda/bin/snpEff"` |
 | `SAMTOOLS_DIR` | Path to `samtools` binary | `"bcbio/anaconda/bin/samtools"` |
-| `BED_TOOLS_DIR` | Path to `bedtools` binary | `"bcbio/anaconda/bin/bedtools"` |
+
 
 ---
 
@@ -80,12 +80,13 @@ The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM
 ```
 CONFIG_FILE="Fate-AI/WGS_alignment/Config/ENV_USER_OPTIONS.yaml"
 FIXED_CONDA_PATH="Fate-AI/WGS_alignment/output_folder/.snakemake/conda/"
+SNAKEFILE="Fate-AI/WGS_alignment/pipelineAlignWGS.Snakefile"
 SAMPLE_IN_PARALLEL="4"
 
 conda activate snakemake
 snakemake --configfile $CONFIG_FILE \
 	--executor slurm --workflow-profile profiles/default/ \
-	-s 1_pipelineAlign_noPlot.Snakefile \
+	-s $SNAKEFILE \
 	--jobs $SAMPLE_IN_PARALLEL \
 	--use-conda --conda-prefix $FIXED_CONDA_PATH
 ```
@@ -94,7 +95,7 @@ snakemake --configfile $CONFIG_FILE \
 ```
 snakemake --configfile $CONFIG_FILE \
 	--executor slurm --workflow-profile profiles/default/ \
-	-s 1_pipelineAlign_noPlot.Snakefile \
+	-s $SNAKEFILE \
 	-R --until Do_Variant_Calling \
 	--jobs $SAMPLE_IN_PARALLEL \
 	--use-conda --conda-prefix $FIXED_CONDA_PATH
@@ -104,7 +105,7 @@ snakemake --configfile $CONFIG_FILE \
 ```
 snakemake --configfile $CONFIG_FILE \
 	--executor slurm --workflow-profile profiles/default/ \
-	-s 1_pipelineAlign_noPlot.Snakefile \
+	-s $SNAKEFILE \
 	-R --until multiqc_all \
 	--jobs $SAMPLE_IN_PARALLEL \
 	--use-conda --conda-prefix $FIXED_CONDA_PATH

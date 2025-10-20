@@ -50,152 +50,160 @@ getPathFragm <- function(sample, OUTPUT_DIR = "output/WGS/", FRAGM_DIR = "FRAGM_
 ##### extract fragm lenght and end-motif in 3Mb region (output _res_frag_motif.RData) #####
 saveFragmBIN_fromBam <- function(sample, 
                                  bam,
-                                 PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output"){
+                                 PATH_OUTPUT_GC = "WGS_alignment/output_folder/GC_correction_output", 
+                                 BED_FILE_SPECIFIC = NULL){
 
   path_output <- getPathFragm(sample)
   print(path_output)
   
   if(!file.exists(path_output)){
   
-  BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
-  
-  library(parallel)
-  library(dplyr)
-  
-  SUFFIX_BAM <- gsub(".bam","", SUFFIX_BAM_WGS)
-  GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample, SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
-  
-  tmp_dir <- "/temp"
-  awk_file_filter = paste0(PATH_INITIAL, "scripts/filter_wgs.awk")
-  
-  df_BED <- as.data.frame(read.csv(BEDFILE, sep = "\t"))
-  regions <- apply(df_BED, 1, function(x) paste(gsub("chr","",x[1]), as.integer(x[2]), as.integer(x[3]) , sep = "-"))
-  
-  resFEATUREs <- mclapply(regions, function(region){
-    
-    print(region)
-    
-    region_data <-  strsplit(region, "-")[[1]]
-    region_data[1] <- paste0("chr", region_data[1])
-    position <- paste0(region_data[1],":",region_data[2],"-", region_data[3])
-    
-    watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", position, " | awk -v MIN_MAPQ=", 
-                     MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, 
-                     " -v CHR=", region_data[1], " -v R_START=", as.numeric(region_data[2]), 
-                     " -v R_END=", as.numeric(region_data[3]), " -v R_ID=", 
-                     region_data[6], " -f ", awk_file_filter)
-    
-    crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", 
-                    position, " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", 
-                    MAX_FRAG_LENGHT, " -v CHR=", region_data[1], 
-                    " -v R_START=", as.numeric(region_data[2]), " -v R_END=", 
-                    as.numeric(region_data[3]), " -v R_ID=", region_data[6], 
-                    " -f ", awk_file_filter)
-    
-    #### WATSON
-    
-    watsonFRAG <- tryCatch( 
-      {
-        read.csv(text = system(watson, intern = TRUE), 
-                 header = FALSE, sep = "\t")
-      },
-      error = function(e) {
-        NULL
-      }
-    )
-    
-    crickFRAG <- tryCatch( 
-      {
-        read.csv(text = system(crick, intern = TRUE), 
-                 header = FALSE, sep = "\t")
-      },
-      error = function(e) {
-        NULL
-      }
-    )
-    
-    
-    if (!is.null(watsonFRAG)){
-      watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG_LENGHT,]
-      watsonFRAG$V1 <- "watsonFRAG"
-    }
-    if (!is.null(crickFRAG)){
-      crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG_LENGHT,]
-      crickFRAG$V1 <- "crickFRAG"
-    }
-    
-    if(is.null(crickFRAG) & is.null(watsonFRAG)){
-      actualStrand <- NULL
-    }else if(!is.null(crickFRAG) & !is.null(watsonFRAG)){
-      actualStrand <- rbind(watsonFRAG,crickFRAG)
-    }else if(!is.null(crickFRAG)){
-      actualStrand <- crickFRAG
-    }else if(!is.null(watsonFRAG)){
-      actualStrand <- watsonFRAG
-    }
-    
-    
-    if(!is.null(actualStrand)){
+    if(is.null(BED_FILE_SPECIFIC)){
       
-      regions <- paste0(actualStrand$V6,":",actualStrand$V7,"-", actualStrand$V8-1)
-      regions <- as.list(regions)
-      d <- 1:length(regions)
-      chunks <- split(d, ceiling(seq_along(d)/5000))
-      
-      resChunks <- lapply(chunks, function(chunk){
-        
-        func2 <-  paste(PATH_SAMTOOLS, "faidx ",FASTA_FILE, do.call(paste, regions[chunk]))
-        MOTIFS <- system(func2, intern = TRUE)
-        MOTIFS[grep("chr", MOTIFS)] <- "-"
-        MOTIFS <- (MOTIFS[!grepl("chr", MOTIFS)])
-        MOTIFS <- do.call(paste0, as.list(MOTIFS))
-        MOTIFS <- substr(MOTIFS, 2, nchar(MOTIFS))
-        MOTIFS <- strsplit(MOTIFS, split = "-")
-        MOTIFS
-      })
-      
-      resChunks <- unlist(resChunks)
-      region_weights <-  lapply(resChunks, function(seq){
-        fragm_len <- nchar(seq)
-        GC_count <- (lengths(regmatches(seq, gregexpr("G", seq))))+(lengths(regmatches(seq, gregexpr("C", seq))))
-        round(GC_bias[(fragm_len-MIN_FRAG_LENGHT)+1,GC_count+1],5)
-      })
-      
-      GC_weight <- unlist(region_weights)
-      actualStrand <- cbind(actualStrand, GC_weight)
-      
-      region_motifs <-  lapply(1:length(resChunks), function(num_seq){
-        seq <- resChunks[[num_seq]]
-        nameStrand <- actualStrand[num_seq,]$V1
-        if(nameStrand=="watsonFRAG"){
-          substr(seq, 1, 4)
-        }else if(nameStrand=="crickFRAG"){
-          substr(seq, nchar(seq)-3, nchar(seq))
-        }
-        
-      })
-      
-      end_motif <- unlist(region_motifs)
-      actualStrand <- cbind(actualStrand, end_motif)
-      
-      region_motifs <- as.data.frame(actualStrand %>% dplyr::group_by(end_motif) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
-      colnames(region_motifs) <- c("Motif", "sum_GC_weight", "Counts")
-      
-      region_weights <- as.data.frame(actualStrand %>% dplyr::group_by(V9) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
-      colnames(region_weights) <- c("Frag_len", "sum_GC_weight", "num_frag")
-      
-      list_res <- list(region_weights, region_motifs)
-      names(list_res) <- c("region_weights","region_motifs")
-      list_res
+      BEDFILE <- paste0(PATH_INITIAL, "/data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
+      if(!file.exists(BEDFILE)) system(paste0(BED_TOOLS_DIR, " makewindows -g ",PATH_INITIAL, "acc_files/GenomeSizeHg38.txt -w ", BIN_SIZE_WGS, " -s ", BIN_SIZE_WGS+1, " > /data/genome_hg38_", as.integer(BIN_SIZE_WGS), ".bed")
+                                       
     }else{
-      NULL
+      BEDFILE <- BED_FILE_SPECIFIC
     }
+      
+    library(parallel)
+    library(dplyr)
     
-  }, mc.cores = NUM_THREADS)
-  
-  names(resFEATUREs) <- regions
-  
-  save(resFEATUREs, file = path_output)
+    SUFFIX_BAM <- gsub(".bam","", SUFFIX_BAM_WGS)
+    GC_bias <- read.table(paste0(PATH_INITIAL, PATH_OUTPUT_GC, "/", sample, SUFFIX_BAM, "/", sample, SUFFIX_BAM, "_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz"), sep = "|")
+    
+    tmp_dir <- "/temp"
+    awk_file_filter = paste0(PATH_INITIAL, "scripts/filter_wgs.awk")
+    
+    df_BED <- as.data.frame(read.csv(BEDFILE, sep = "\t"))
+    regions <- apply(df_BED, 1, function(x) paste(gsub("chr","",x[1]), as.integer(x[2]), as.integer(x[3]) , sep = "-"))
+    
+    resFEATUREs <- mclapply(regions, function(region){
+      
+      print(region)
+      
+      region_data <-  strsplit(region, "-")[[1]]
+      region_data[1] <- paste0("chr", region_data[1])
+      position <- paste0(region_data[1],":",region_data[2],"-", region_data[3])
+      
+      watson <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 99 ", position, " | awk -v MIN_MAPQ=", 
+                       MAPQ, " -v MAX_FRAGMENT_LEN=", MAX_FRAG_LENGHT, 
+                       " -v CHR=", region_data[1], " -v R_START=", as.numeric(region_data[2]), 
+                       " -v R_END=", as.numeric(region_data[3]), " -v R_ID=", 
+                       region_data[6], " -f ", awk_file_filter)
+      
+      crick <- paste0(PATH_SAMTOOLS, " view ", bam, " -f 163 ", 
+                      position, " | awk -v MIN_MAPQ=", MAPQ, " -v MAX_FRAGMENT_LEN=", 
+                      MAX_FRAG_LENGHT, " -v CHR=", region_data[1], 
+                      " -v R_START=", as.numeric(region_data[2]), " -v R_END=", 
+                      as.numeric(region_data[3]), " -v R_ID=", region_data[6], 
+                      " -f ", awk_file_filter)
+      
+      #### WATSON
+      
+      watsonFRAG <- tryCatch( 
+        {
+          read.csv(text = system(watson, intern = TRUE), 
+                   header = FALSE, sep = "\t")
+        },
+        error = function(e) {
+          NULL
+        }
+      )
+      
+      crickFRAG <- tryCatch( 
+        {
+          read.csv(text = system(crick, intern = TRUE), 
+                   header = FALSE, sep = "\t")
+        },
+        error = function(e) {
+          NULL
+        }
+      )
+      
+      
+      if (!is.null(watsonFRAG)){
+        watsonFRAG = watsonFRAG[watsonFRAG$V9>=MIN_FRAG_LENGHT,]
+        watsonFRAG$V1 <- "watsonFRAG"
+      }
+      if (!is.null(crickFRAG)){
+        crickFRAG = crickFRAG[crickFRAG$V9>=MIN_FRAG_LENGHT,]
+        crickFRAG$V1 <- "crickFRAG"
+      }
+      
+      if(is.null(crickFRAG) & is.null(watsonFRAG)){
+        actualStrand <- NULL
+      }else if(!is.null(crickFRAG) & !is.null(watsonFRAG)){
+        actualStrand <- rbind(watsonFRAG,crickFRAG)
+      }else if(!is.null(crickFRAG)){
+        actualStrand <- crickFRAG
+      }else if(!is.null(watsonFRAG)){
+        actualStrand <- watsonFRAG
+      }
+      
+      
+      if(!is.null(actualStrand)){
+        
+        regions <- paste0(actualStrand$V6,":",actualStrand$V7,"-", actualStrand$V8-1)
+        regions <- as.list(regions)
+        d <- 1:length(regions)
+        chunks <- split(d, ceiling(seq_along(d)/5000))
+        
+        resChunks <- lapply(chunks, function(chunk){
+          
+          func2 <-  paste(PATH_SAMTOOLS, "faidx ",FASTA_FILE, do.call(paste, regions[chunk]))
+          MOTIFS <- system(func2, intern = TRUE)
+          MOTIFS[grep("chr", MOTIFS)] <- "-"
+          MOTIFS <- (MOTIFS[!grepl("chr", MOTIFS)])
+          MOTIFS <- do.call(paste0, as.list(MOTIFS))
+          MOTIFS <- substr(MOTIFS, 2, nchar(MOTIFS))
+          MOTIFS <- strsplit(MOTIFS, split = "-")
+          MOTIFS
+        })
+        
+        resChunks <- unlist(resChunks)
+        region_weights <-  lapply(resChunks, function(seq){
+          fragm_len <- nchar(seq)
+          GC_count <- (lengths(regmatches(seq, gregexpr("G", seq))))+(lengths(regmatches(seq, gregexpr("C", seq))))
+          round(GC_bias[(fragm_len-MIN_FRAG_LENGHT)+1,GC_count+1],5)
+        })
+        
+        GC_weight <- unlist(region_weights)
+        actualStrand <- cbind(actualStrand, GC_weight)
+        
+        region_motifs <-  lapply(1:length(resChunks), function(num_seq){
+          seq <- resChunks[[num_seq]]
+          nameStrand <- actualStrand[num_seq,]$V1
+          if(nameStrand=="watsonFRAG"){
+            substr(seq, 1, 4)
+          }else if(nameStrand=="crickFRAG"){
+            substr(seq, nchar(seq)-3, nchar(seq))
+          }
+          
+        })
+        
+        end_motif <- unlist(region_motifs)
+        actualStrand <- cbind(actualStrand, end_motif)
+        
+        region_motifs <- as.data.frame(actualStrand %>% dplyr::group_by(end_motif) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
+        colnames(region_motifs) <- c("Motif", "sum_GC_weight", "Counts")
+        
+        region_weights <- as.data.frame(actualStrand %>% dplyr::group_by(V9) %>% dplyr::summarise(sum_weight = sum(GC_weight), count = n()))
+        colnames(region_weights) <- c("Frag_len", "sum_GC_weight", "num_frag")
+        
+        list_res <- list(region_weights, region_motifs)
+        names(list_res) <- c("region_weights","region_motifs")
+        list_res
+      }else{
+        NULL
+      }
+      
+    }, mc.cores = NUM_THREADS)
+    
+    names(resFEATUREs) <- regions
+    
+    save(resFEATUREs, file = path_output)
   
   }
 
@@ -222,18 +230,9 @@ getPathMetrics <- function(sample, OUTPUT_DIR = "output/WGS/", METRICS_DIR = "ME
   path_output
 }
 
-saveMetricsBIN <- function(sample,
+saveMetricsBIN <- function(sample, 
+                           bam,
                            GC_CORR = TRUE){
-
-#dirRead <- paste0(PATH_INITIAL, OUTPUT_DIR, FRAGM_DIR)
-#dirSave <- paste0(PATH_INITIAL, OUTPUT_DIR, METRICS_DIR)
-
-# if (!dir.exists(dirSave)) {
-#   dir.create(dirSave)
-# }
-#   
-# dir.create(dirSave)
-# setwd(dirSave)
 
 MIN_NUCLEOSOME_CORE <- 140
 MIN_CHROMATOSOME <- 160
@@ -252,9 +251,9 @@ coverage_nucleosome <- function(frag_lengths){
   sum(frag_lengths>=MIN_NUCLEOSOME  & frag_lengths<= MAX_NUCLEOSOME)
 }    
 
-#path_fragm_data <- paste0(dirRead, sample, "_", as.integer(BIN_SIZE_WGS), "_res_frag_motif.RData")
-
 path_fragm_data <- getPathFragm(sample)
+
+if(!file.exists(path_fragm_data)) saveFragmBIN_fromBam(sample, bam)
 
 path_output <- getPathMetrics(sample)
 
