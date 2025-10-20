@@ -5,6 +5,7 @@ channels:
   - plotly
   - nodefaults
 dependencies:
+  - git
   - bedtools
   - python=3.10
   - pip

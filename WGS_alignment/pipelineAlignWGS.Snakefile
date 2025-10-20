@@ -252,20 +252,24 @@ SUFFIX_CLEAR = re.sub(".bam", "", config['BAM_SUFFIX'])
 rule install_GCparagon:
 	output:
 		#str(config['my_basedir']) + "/GCparagon/GCparagon_installed.txt"
-		str(config['my_basedir']) + "/GCparagon/setup.py"
+		str(config['my_basedir']) + "/GCparagon/src/GCparagon-AccessoryFiles/hg38_reference_GC_content_distribution.tsv"
 	conda:
 		"conda_env/GCparagon_py3.10_env.yml"  
 	params:
 		my_basedir = config['my_basedir']
+	log:
+		str(config['my_basedir']) + "install_GCparagon.log"
 	shell:
 		"""
 		cd {params.my_basedir}
+		rm -rf GCparagon/
 		git clone https://github.com/BGSpiegl/GCparagon
 		cd GCparagon
-		#pip install .
+		pip install .
 		#echo "GCparagon_installed" > GCparagon_installed.txt
 		cd {params.my_basedir}
 		"""
+
 
 rule get_twobit:
 	output:
@@ -282,10 +286,10 @@ rule get_twobit:
 		"get_twobit.log"
 	shell:
 		"faToTwoBit {params.fastapath} {params.my_basedir}/acc_files/genome2bit/hg38.2bit"
-    	
+
 rule GC_corr:
 	input:
-		str(config['my_basedir']) + "/GCparagon/setup.py",
+		str(config['my_basedir']) + "/GCparagon/src/GCparagon-AccessoryFiles/hg38_reference_GC_content_distribution.tsv",
 		str(config['my_basedir']) + "/acc_files/genome2bit/hg38.2bit",
 		str(config['PATH_BAM']) + "{sample}"+ str(config['BAM_SUFFIX'])
 	output:
@@ -305,7 +309,7 @@ rule GC_corr:
 	log:
 		"{sample}.log"
 	shell:
-		"python {params.my_basedir}/GCparagon/src/GCparagon/correct_GC_bias.py --bam {params.PATH_BAM}/{wildcards.sample}{params.SUFFIX_BAM} -rtb {params.my_basedir}/acc_files/genome2bit/hg38.2bit -rgcd {params.my_basedir}/GCparagon/accessory_files/hg38_reference_GC_content_distribution.tsv -c {params.my_basedir}/GCparagon/accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed -o {params.OUTPUT_DIR}GC_correction_output/ --threads {params.nthreads}"
+		"python {params.my_basedir}/GCparagon/src/GCparagon/correct_GC_bias.py --bam {params.PATH_BAM}/{wildcards.sample}{params.SUFFIX_BAM} -rtb {params.my_basedir}/acc_files/genome2bit/hg38.2bit -rgcd {params.my_basedir}/GCparagon/src/GCparagon-AccessoryFiles/hg38_reference_GC_content_distribution.tsv -c {params.my_basedir}/GCparagon/src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed -o {params.OUTPUT_DIR}GC_correction_output/ --threads {params.nthreads}"
 
 	
 
