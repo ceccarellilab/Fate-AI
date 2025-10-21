@@ -1,8 +1,12 @@
 # Fragmentomics Analysis for Tumor Evaluation with AI (Fate-AI)
 
-## 1) Install Snakemake and SLURM plugin (tested with snakemake 9.12.0)
+## 1) Install Fate-AI and Snakemake with SLURM plugin for pipeline alignment (tested with snakemake 9.12.0)
 ```
 conda create -c conda-forge -c bioconda -c nodefaults -n snakemake snakemake snakemake-executor-plugin-slurm
+
+git clone https://github.com/ceccarellilab/Fate-AI.git
+library(devtools)
+install_github("ceccarellilab/Fate-AI")
 ```
 
 ## 2) Alignment WGS 
@@ -33,7 +37,12 @@ Follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.c
 | `CLASS_PARAMS_WGS` | list | Parameters for each cancer type: CNV frequency (`freq`) and NCIT code (`NCIT`). [Fate-AI]  | `Colon: freq: 25 NCIT: "C2955"` |
 | `CLASS_TO_TCGA` | list | Maps cancer type to TCGA identifiers. [Fate-AI(+Meth)] | `Urothelial : "TCGA_BLCA"` |
 
-### 4.2) Compute fragment lengths and metrics in each bin (3Mb) [Fate-AI]
+### 4.2) Setup environment 
+```
+library(FateAI)
+setup_environment()
+```
+### 4.3) Compute fragment lengths and metrics in each bin (3Mb) [Fate-AI]
 ```
 AllSample_df <- data.frame(
   Sample = "ICH20", 
@@ -49,7 +58,7 @@ saveMetricsBIN(
     )
 ```
 
-### 4.3) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
+### 4.4) Get Coverage on DMRs for Each Sample [Fate-AI(+Meth)]
 
 ```
 saveCoverageDMRs_fromBam(
@@ -62,7 +71,7 @@ saveCoverageDMRs_fromBam(
 ```
 
 
-###  4.4) Get features lpWGS [Fate-AI]
+###  4.5) Get features lpWGS [Fate-AI]
 ```
 feat_WGS <- getFeatureBasedOnCNV(
     AllSample_df$Sample, 
@@ -70,7 +79,7 @@ feat_WGS <- getFeatureBasedOnCNV(
 )
 ```
 
-###  4.5) Get features cfMeDIP [Fate-AI(+Meth)]
+###  4.6) Get features cfMeDIP [Fate-AI(+Meth)]
 ```
 feat_cfmedip <- getFeature_cfMeDIP(
     AllSample_df$Sample,
@@ -79,7 +88,7 @@ feat_cfmedip <- getFeature_cfMeDIP(
 
 ```
 
-### 4.6) Get prediction [Fate-AI(+Meth)]
+### 4.7) Get prediction [Fate-AI(+Meth)]
 
 ```
 feat_mtx <- cbind(feat_WGS, feat_cfmedip)

@@ -1,12 +1,12 @@
 
 setup_environment <- function(config_path = "Config/config.yaml") {
   # Load libraries
-  required_pkgs <- c("yaml", "caret", "TCGAbiolinks", "SummarizedExperiment","parallel", 
-                     "doParallel", "pgxRpi", "dplyr", "GenomicRanges", "philentropy", "deconvR")
-  invisible(lapply(required_pkgs, function(pkg) {
-    if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
-    library(pkg, character.only = TRUE)
-  }))
+  #required_pkgs <- c("yaml", "caret", "TCGAbiolinks", "SummarizedExperiment","parallel", 
+  #                   "doParallel", "pgxRpi", "dplyr", "GenomicRanges", "philentropy", "deconvR")
+  #invisible(lapply(required_pkgs, function(pkg) {
+  #  if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
+  #  library(pkg, character.only = TRUE)
+  #}))
   
   # Load config file
   config <- read_yaml(config_path)
