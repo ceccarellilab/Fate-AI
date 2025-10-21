@@ -301,6 +301,8 @@ if(!file.exists(path_output)){
   }
   
   save(df, file = path_output)
+
+  }
 }
 
 path_output <- getPathMetrics(sample, MOTIF = TRUE)
