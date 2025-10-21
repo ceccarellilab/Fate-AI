@@ -1,0 +1,7 @@
+export(setup_environment)
+export(saveMetricsBIN)
+export(saveCoverageDMRs_fromBam)
+export(getFeatureBasedOnCNV)
+export(getFeature_cfMeDIP)
+export(classifyMATRIX)
+useDynLib(FateAI, .registration=TRUE)

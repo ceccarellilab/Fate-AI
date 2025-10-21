@@ -258,7 +258,7 @@ rule install_GCparagon:
 	params:
 		my_basedir = config['my_basedir']
 	log:
-		str(config['my_basedir']) + "install_GCparagon.log"
+		"install_GCparagon.log"
 	shell:
 		"""
 		cd {params.my_basedir}
