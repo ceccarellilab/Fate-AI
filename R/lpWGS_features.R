@@ -1,5 +1,5 @@
 
-##### Download new CNV profile from Progenetix (TO TEST) ##### 
+##### Download new CNV profile from Progenetix ##### 
 
 saveCNV_fromProgenetix <- function(NCIT_CODE = "C3224"){
   
