@@ -15,10 +15,12 @@ saveCNV_fromProgenetix <- function(NCIT_CODE = "C3224"){
                            filters=c(paste0("NCIT:",NCIT_CODE)))
     #pgxFreqplot(frequency)
     
-    #group_id	reference_name	start	end	gain_frequency	loss_frequency	no
     frequency_df <- as.data.frame(frequency)
+    frequency_df <- frequency_df[,c("group_name", "seqnames","start","end","low_gain_frequency", "low_loss_frequency")]
+    colnames(frequency_df) <- c("group_id",	"reference_name",	"start",	"end",	"gain_frequency",	"loss_frequency")
+    frequency_df$no <- 1:nrow(frequency_df)
     
-    write.table(frequency_df, file = OUTPUT_PATH, sep = "\t")
+    write.table(frequency_df, file = OUTPUT_PATH, sep = "\t", quote = F, row.names = F)
   }
 }
 

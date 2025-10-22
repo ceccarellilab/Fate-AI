@@ -21,7 +21,7 @@ install_github("ceccarellilab/Fate-AI")
 ```
 
 ## 2) Align lpWGS samples and perform GC correction
-To align lpWGS samples or perform GC correction on aligned files, follow the instructions in the [Snakemake pipeline WGS alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/WGS_alignment)
+To align lpWGS samples or perform GC correction on already aligned files, follow the instructions in the [Snakemake pipeline WGS alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/WGS_alignment)
 
 ## 3) Alignment cfMeDIP-seq
 To align cfMeDIP-seq samples, follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/cfMeDIP_alignment)
