@@ -14,6 +14,14 @@ The entire pipeline is implemented using Snakemake and is executed on the cluste
 
 ---
 
+### Pipeline Options
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `NUM_THREADS` | Number of threads to use for parallel processing in each sample | `40` |
+
+---
+
 ### Reference Genome & Index
 
 | Parameter | Description | Example |
@@ -40,7 +48,6 @@ The entire pipeline is implemented using Snakemake and is executed on the cluste
 | Parameter | Description | Example |
 |-----------|-------------|---------|
 | `FASTQ_SUFFIXES` | File name suffixes for paired-end reads | `1_SUFFIX: "R1_001.fastq.gz"` <br> `2_SUFFIX: "R2_001.fastq.gz"` |
-| `NUM_THREADS` | Number of threads for parallel alignment | `40` |
 
 ---
 

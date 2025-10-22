@@ -113,3 +113,20 @@ if(is.null(TEST_INDEX)){ #"Matched-cohort"
     )
 }
 ```
+
+
+
+## Citation
+>
+>@article {De Falco2025.10.20.683167,
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       author = {De Falco, Antonio and Grisolia, Piera and Giuffrida, Raffaella and Iannarone, Clara and Graziano, Cinzia and Scrima, Marianna and Cossu, Alessia Maria and Tufano, Rossella and Yow, Maria Vanessa and Brown, Chloe Marissa and Bajaj, Palak and Bocchetti, Marco and Nuzzo, Pier Vitale and Morgillo, Floriana and Caraglia, Francesco and Della Corte, Carminia Maria and Di Guida, Gaetano and Troiani, Teresa and Ciardiello, Fortunato and Rizzo, Maria Rosaria and Fiorelli, Alfonso and Giordano, Noemi Maria and Arcaniolo, Davide and Della Rosa, Giampiero and Desio, Marco and Covre, Alessia and Di Giacomo, Annamaria and Calabrò, Luana and Fontana, Paolo and Mare, Mariza and Landgren, Ola and Green, Damian and Lesokhin, Alex and Maio, Michele and Coffey, David and Merchant, Nipun and Datta, Jashodeep and Forte, Stefano and Caraglia, Michele and Ceccarelli, Michele},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       title = {Knowledge-informed multimodal cfDNA analysis improves sensitivity and generalization in cancer detection},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       year = {2025},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       month = {10},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       elocation-id = {2025.10.20.683167},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       doi = {10.1101/2025.10.20.683167},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       URL = {https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       eprint = {https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167.full.pdf},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       publisher = {Cold Spring Harbor Laboratory},
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp       journal = {bioRxiv}
+>}
