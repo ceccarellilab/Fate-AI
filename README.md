@@ -1,8 +1,8 @@
-# Fragmentomics Analysis for Tumor Evaluation with AI (Fate-AI)
-
 <div>
 <img src="Fate-AI.png" align="right" width="200">
 </div>
+
+# Fragmentomics Analysis for Tumor Evaluation with AI (Fate-AI)
 
 Preprint: [Knowledge-informed multimodal cfDNA analysis improves sensitivity and generalization in cancer detection](https://www.biorxiv.org/content/10.1101/2025.10.20.683167v1)
 
