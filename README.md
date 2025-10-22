@@ -1,20 +1,24 @@
 # Fragmentomics Analysis for Tumor Evaluation with AI (Fate-AI)
 
-## 1) Install Fate-AI and Snakemake with SLURM plugin for pipeline alignment (tested with snakemake 9.12.0)
+## 1) Install Fate-AI and Snakemake
+
+Install snakemake and Slurm executor plugin for pipeline alignment (tested with snakemake 9.12.0), and clone the Fate-AI repository:
 ```
 conda create -c conda-forge -c bioconda -c nodefaults -n snakemake snakemake snakemake-executor-plugin-slurm
-
 git clone https://github.com/ceccarellilab/Fate-AI.git
+```
+
+Install Fate-AI in R:
+```
 library(devtools)
 install_github("ceccarellilab/Fate-AI")
 ```
 
-## 2) Alignment WGS 
-Follow the instructions: [Snakemake pipeline WGS alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/WGS_alignment)
+## 2) Align lpWGS samples and perform GC correction
+To align lpWGS samples or perform GC correction on aligned files, follow the instructions in the [Snakemake pipeline WGS alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/WGS_alignment)
 
 ## 3) Alignment cfMeDIP-seq
-Follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/cfMeDIP_alignment)
-
+To align cfMeDIP-seq samples, follow the instructions: [Snakemake pipeline cfMeDIP alignment](https://github.com/ceccarellilab/Fate-AI/tree/main/cfMeDIP_alignment)
 
 ## 4) Fate-AI(+Meth)
 
