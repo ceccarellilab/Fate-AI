@@ -19,10 +19,6 @@ BAM_SUFFIX : "_recal.bam"
 # Num Threads for each sample
 NUM_THREADS : 40
 
-MAX_FRAG_LENGHT : 550
-MAPQ : 30
-BIN_SIZE : 3000000
-
 # reference data files
 FASTA : "bcbio/genomes/Hsapiens/hg38/seq/hg38.fa"
 DBSNP : "bcbio/genomes/Hsapiens/hg38/variation/dbsnp-150.vcf.gz"

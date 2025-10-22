@@ -18,6 +18,14 @@ The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM
 
 ---
 
+### Pipeline Options
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `NUM_THREADS` | Number of threads to use for parallel processing in each sample | `40` |
+
+---
+
 ### FASTQ Options
 
 | Parameter | Description | Example |
@@ -33,10 +41,6 @@ The pipeline can start from either raw sequencing FASTQ files or pre-aligned BAM
 | Parameter | Description | Example |
 |-----------|-------------|---------|
 | `BAM_SUFFIX` | Suffix for BAM files | `"_recal.bam"` |
-| `NUM_THREADS` | Number of threads to use for parallel processing in each sample | `40` |
-| `MAX_FRAG_LENGHT` | Maximum fragment length to consider for fragment-based analysis | `550` |
-| `MAPQ` | Minimum mapping quality threshold for reads | `30` |
-| `BIN_SIZE` | Bin size for genome-wide metrics (e.g., copy number or fragmentation) | `3000000` |
 
 ---
 
