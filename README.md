@@ -57,7 +57,7 @@ setup_environment()
 AllSample_df <- data.frame(
   Sample = "ICH20", 
   pathBAM_WGS = "raw_data/BAM/WGS/ICH20_recal.bam", 
-  pathBAM_MEDIP = "raw_data/BAM/cfMeDIP/IPI01S.sorted.bam", 
+  pathBAM_MEDIP = "raw_data/BAM/cfMeDIP/IPH20.sorted.bam", 
   Class = "Urothelial", 
   row.names = "ICH20"
 )
