@@ -14,6 +14,14 @@ conda create -c conda-forge -c bioconda -c nodefaults -n snakemake snakemake sna
 git clone https://github.com/ceccarellilab/Fate-AI.git
 ```
 
+Install Bioconductor dependencies:
+```
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("deconvR")
+BiocManager::install("pgxRpi")
+```
+
 Install Fate-AI in R:
 ```
 library(devtools)
