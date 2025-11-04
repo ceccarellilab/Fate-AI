@@ -15,11 +15,9 @@ Imports:
   SummarizedExperiment,
   parallel,
   doParallel,
-  pgxRpi,
   dplyr,
   GenomicRanges,
-  philentropy,
-  deconvR
+  philentropy
 LazyLoad: yes
 NeedsCompilation: no
 RoxygenNote: 7.3.1
