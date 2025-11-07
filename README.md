@@ -143,8 +143,8 @@ if(is.null(TEST_INDEX)){ #"Matched-cohort"
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; month = {10},  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; elocation-id = {2025.10.20.683167},  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; doi = {10.1101/2025.10.20.683167},  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; URL = {https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167},  
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; eprint = {https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167.full.pdf},  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; URL = {[https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167](https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167)},  
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; eprint = {[https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167.full.pdf](https://www.biorxiv.org/content/early/2025/10/21/2025.10.20.683167.full.pdf)},  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; publisher = {Cold Spring Harbor Laboratory},  
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; journal = {bioRxiv}  
 > }
